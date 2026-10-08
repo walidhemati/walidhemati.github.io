@@ -1,0 +1,85 @@
+---
+n: 5
+title: Emotion from EEG
+line: Biosignal-based latent factor decoding for emotion detection with a variational autoencoder, on the DEAP and SEED datasets.
+discipline: Research · ML
+domain: [research, ml-cv]
+year: 2022
+yearConfirmed: false
+status: research
+stack: [Python, MATLAB]
+featured: true
+description: Research on emotion detection from EEG with a variational autoencoder that decodes latent factors from biosignals (DEAP and SEED datasets).
+todo:
+  - Year (the old site says 2022) and his role, confirmed by Walid.
+  - Exact repository URL (repo name not recorded in the audit) and the paper PDF link; then add links.repo / links.paper.
+  - Latent-space figure, the abstract and any reported results (as verified metrics).
+---
+import TLDR from '../../components/content/TLDR.astro';
+import Decision from '../../components/content/Decision.astro';
+import Results from '../../components/content/Results.astro';
+
+<TLDR
+  problem="EEG is high-dimensional, noisy and different from person to person. Emotion labels are coarse by comparison."
+  approach="A variational autoencoder compresses the recordings into a small set of latent factors, which are then decoded for emotion."
+  result="A research paper with code in Python and MATLAB, using two public datasets: DEAP and SEED."
+/>
+
+## Problem
+
+<p class="lede">The brain signal is rich; the label is one word.</p>
+
+An EEG recording is many channels sampled many times a second, full of artefacts, and shaped by whoever happens to be wearing the cap. The emotion it is supposed to reveal is a single, coarse label. Training a classifier straight from raw signal to label means learning everything at once from very little supervision.
+
+The project asks a narrower question first: can a model learn a compact description of the signal, and does that description carry information about emotion?
+
+## Constraints
+
+- **Public data.** Two established datasets: DEAP, EEG recorded while participants watched music videos and rated their own reactions, and SEED, EEG recorded while participants watched film clips chosen to be positive, neutral or negative.
+- **Two toolchains.** EEG work lives in MATLAB as much as in Python, so the code uses both.
+
+## Approach
+
+<figure class="fig" data-figure>
+  <div class="fig__plate" tabindex="0" role="group" aria-label="FIG. 02, VAE schematic (scrolls sideways on small screens)">
+    <svg class="vae" viewBox="0 0 760 230" aria-hidden="true" focusable="false">
+      <g class="vae__box"><rect x="0" y="70" width="120" height="90" /><text x="14" y="98" class="vae__idx">01</text><text x="14" y="126" class="vae__l">EEG</text><text x="14" y="146" class="vae__s">DEAP · SEED</text></g>
+      <path class="vae__a" d="M120 115H170" /><path class="vae__a" d="M162 110L170 115L162 120" />
+      <path class="vae__trap" d="M170 40L280 85V145L170 190Z" /><text x="190" y="120" class="vae__l">Encoder</text>
+      <path class="vae__a" d="M280 115H330" /><path class="vae__a" d="M322 110L330 115L322 120" />
+      <g>{[0,1,2,3,4,5].map((i) => <rect x="330" y={55 + i * 21} width="44" height="16" class="vae__z" />)}</g>
+      <text x="330" y="40" class="vae__sig">latent z</text>
+      <path class="vae__a" d="M374 90H424" /><path class="vae__a" d="M416 85L424 90L416 95" />
+      <path class="vae__trap" d="M424 70L534 25V155L424 110Z" transform="translate(0 -10)" /><text x="446" y="88" class="vae__l">Decoder</text>
+      <path class="vae__a" d="M534 80H584" /><path class="vae__a" d="M576 75L584 80L576 85" />
+      <g class="vae__box"><rect x="584" y="40" width="176" height="80" /><text x="598" y="76" class="vae__l">Reconstruction</text><text x="598" y="98" class="vae__s">of the signal</text></g>
+      <path class="vae__a vae__a--sig" d="M374 165H584" /><path class="vae__a vae__a--sig" d="M576 160L584 165L576 170" />
+      <g class="vae__box vae__box--sig"><rect x="584" y="140" width="176" height="60" /><text x="598" y="170" class="vae__l">Emotion</text><text x="598" y="188" class="vae__s">decoded from z</text></g>
+    </svg>
+  </div>
+  <figcaption class="fig__caption"><span class="fig__n">FIG. 02</span><span>A variational autoencoder learns to rebuild the signal through a small latent space; the latent factors are what gets decoded for emotion. Schematic.</span></figcaption>
+</figure>
+
+A variational autoencoder has two halves. The encoder maps a recording to a distribution over a few latent factors; the decoder has to rebuild the signal from a sample of them. Because everything must pass through that narrow space, the factors are pushed to capture what is consistent in the signal rather than its noise. Emotion detection then works on those factors instead of on the raw channels.
+
+## Decisions
+
+<div class="decisions">
+  <Decision chose="A variational autoencoder" over="a classifier on raw signal">
+    Learning a compact representation first separates two problems: describing the signal, and reading emotion from that description.
+  </Decision>
+  <Decision chose="DEAP and SEED" over="a single dataset">
+    Two datasets with different stimuli, music videos and film clips, and different labels give the method two independent tests.
+  </Decision>
+</div>
+
+## Results
+
+<Results metrics={frontmatter.metrics}>
+  The work is written up as a paper, with the code alongside it. Its reported numbers will appear here once they are quoted from the paper.
+</Results>
+
+## What I'd do next
+
+- Add a figure of the learned latent space and the paper's abstract to this page.
+- Give the repository a README, so the code can be run without the paper open next to it.

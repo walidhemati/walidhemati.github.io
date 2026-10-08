@@ -1,0 +1,101 @@
+---
+n: 2
+title: pylbm
+line: A GPU Lattice-Boltzmann solver in PyTorch/CUDA for the D2Q9 lid-driven cavity, validated against Ghia et al. (1982).
+discipline: Scientific computing
+domain: [scientific]
+yearConfirmed: false
+status: open-source
+stack: [Python, PyTorch, CUDA]
+links:
+  repo: https://github.com/walidhemati/pylbm
+metrics:
+  - label: Grid
+    after: "512²"
+    source: 'pylbm README: "32MB memory usage for 512² grid (89% of theoretical minimum)"'
+    verified: true
+  - label: Memory
+    after: "32"
+    unit: MB
+    source: 'pylbm README: "32MB memory usage for 512² grid (89% of theoretical minimum)"'
+    verified: true
+  - label: Runtime on GPU
+    after: "< 20"
+    unit: min
+    source: 'pylbm README: "<20 minutes runtime for 512² resolution on GPU"'
+    verified: true
+featured: true
+description: pylbm is a GPU Lattice-Boltzmann solver in PyTorch/CUDA for the D2Q9 lid-driven cavity, validated against Ghia et al. (1982).
+todo:
+  - Start year (repo creation / first commit), confirmed by Walid.
+  - Velocity/vorticity still, a short loop from his own code, centreline CSV against Ghia.
+  - Review the "Decisions" wording; it describes the method's trade-offs, he should confirm they match his reasons.
+---
+import TLDR from '../../components/content/TLDR.astro';
+import Decision from '../../components/content/Decision.astro';
+import Results from '../../components/content/Results.astro';
+import FlowDiagram from '../../components/content/FlowDiagram.astro';
+
+<TLDR
+  problem="A flow solver is only worth something if it reproduces a known answer. The lid-driven cavity has one."
+  approach="A D2Q9 Lattice-Boltzmann scheme written in PyTorch, so the whole lattice updates on the GPU through CUDA."
+  result="The solver's results are checked against the reference data of Ghia et al. (1982), the standard benchmark for this flow."
+/>
+
+## Problem
+
+<p class="lede">Fluid simulation is easy to make look right and hard to make be right.</p>
+
+A square box of fluid, a lid that slides across the top, three walls that hold still: the lid-driven cavity is about the simplest flow there is, and that is exactly why it matters. Since Ghia, Ghia and Shin published their tables in 1982, it has been the test a new incompressible-flow solver has to pass before anyone trusts it with anything else.
+
+pylbm is a solver built to pass that test, and to do it on a GPU.
+
+## Constraints
+
+- **Correctness first.** The output has to line up with published reference data, not just produce a convincing vortex.
+- **One GPU.** The full lattice and its velocity populations have to live in GPU memory at once.
+- **Two dimensions, nine velocities.** The D2Q9 model: every lattice node carries nine populations, one at rest and eight moving to its neighbours.
+- **Python on the GPU.** Written with PyTorch, which runs the arithmetic on the GPU through CUDA.
+
+## Approach
+
+Lattice-Boltzmann does not solve the Navier–Stokes equations directly. It tracks populations of fluid particles on a grid and alternates two simple moves: a **collision**, which relaxes every node towards local equilibrium, and a **stream**, which shifts each population one node along its direction. Walls and the moving lid enter as boundary conditions. Repeat for enough time steps, and the macroscopic flow emerges.
+
+Both moves are the same operation applied to every node at once. Written as PyTorch tensor operations, that is exactly the shape of work a GPU is built for.
+
+<FlowDiagram
+  fig="FIG. 02"
+  caption="One simulation, end to end. Collide and stream repeat for every time step; validation compares the result with Ghia et al. (1982)."
+  steps={[
+    { label: 'Grid', sub: 'D2Q9 lattice\nlid + walls' },
+    { label: 'Collide', sub: 'relax to\nequilibrium' },
+    { label: 'Stream', sub: 'shift to\nneighbours' },
+    { label: 'Validate', sub: 'vs. Ghia et al.\n(1982)' },
+  ]}
+  loop={{ from: 2, to: 1, label: 'every time step' }}
+/>
+
+## Decisions
+
+<div class="decisions">
+  <Decision chose="Lattice-Boltzmann" over="a finite-difference Navier–Stokes solver">
+    Every update in LBM is local: a node only needs itself and its eight neighbours. That makes the method naturally parallel, which is the whole point of running it on a GPU.
+  </Decision>
+  <Decision chose="PyTorch" over="a separate GPU code base">
+    Collision and streaming are written as operations on whole tensors, and PyTorch runs them on the GPU through CUDA. The numerics stay in Python, next to the code that sets up and checks the run.
+  </Decision>
+  <Decision chose="The lid-driven cavity" over="a flow without reference data">
+    A benchmark with published numbers turns "looks plausible" into a comparison that can fail. That is the only kind of result worth reporting.
+  </Decision>
+</div>
+
+## Results
+
+<Results metrics={frontmatter.metrics}>
+  The solver is validated against the benchmark data of Ghia et al. (1982). Grid size, memory footprint and runtime below are quoted from the [README](https://github.com/walidhemati/pylbm).
+</Results>
+
+## What I'd do next
+
+- Put the evidence on this page: velocity profiles along the cavity centrelines plotted over Ghia's points, and a vorticity render from the solver itself.
+- A small, interactive version of the cavity that runs in the browser, with the Reynolds number on a slider.

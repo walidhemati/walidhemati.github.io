@@ -1,0 +1,58 @@
+---
+/**
+ * One "Chose X over Y because…" entry (plan 5.4 #8). Wrap several in a plain
+ * <div class="decisions"> in MDX; the counter numbers them.
+ */
+interface Props {
+  chose: string;
+  over: string;
+}
+const { chose, over } = Astro.props;
+---
+
+<div class="decision">
+  <p class="decision__head">
+    <span class="t-label decision__k">Chose</span>
+    <strong class="decision__chose">{chose}</strong>
+    <span class="t-label decision__k">over</span>
+    <span class="decision__over">{over}</span>
+  </p>
+  <div class="decision__why"><slot /></div>
+</div>
+
+<style>
+  .decision {
+    counter-increment: decision;
+    position: relative;
+    display: grid;
+    gap: var(--sp-3);
+    padding: var(--sp-5) 0;
+    border-top: 1px solid var(--rule);
+  }
+  .decision::before {
+    content: "D." counter(decision, decimal-leading-zero);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-s);
+    letter-spacing: .06em;
+    color: var(--signal-text);
+  }
+  .decision__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--sp-1) var(--sp-3);
+    font-size: var(--fs-h3);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    max-width: none;
+  }
+  .decision__chose { font-weight: 600; }
+  .decision__over { font-size: var(--fs-lead); color: var(--ink-3); text-decoration: line-through; text-decoration-color: var(--rule-ui); text-decoration-thickness: 1px; }
+  .decision__k { align-self: center; }
+  .decision__why { color: var(--ink-2); max-width: var(--measure); }
+  .decision__why :global(p) { margin: 0; }
+  @media (min-width: 1024px) {
+    .decision { grid-template-columns: 4rem 1fr; column-gap: var(--sp-5); }
+    .decision::before { padding-top: .6em; grid-row: span 2; }
+  }
+</style>

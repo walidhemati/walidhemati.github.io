@@ -1,0 +1,310 @@
+---
+/**
+ * Approach diagram (plan 5.4 #7). A linear pipeline drawn as inline SVG,
+ * generated at build time in two orientations: a wide one (≥1024px) and a
+ * tall one (phones, tablets), so labels stay readable at every width.
+ *
+ * Every element is drawn in theme tokens (currentColor + CSS vars), so it
+ * works in light, dark and print. Paths carry [data-draw] for the optional
+ * DrawSVG pass (plan 4.4 #16); without JS they are simply static.
+ *
+ * Props
+ *   steps     [{ label, sub? }]  sub may contain "\n" for a second line
+ *   boundary  optional label for a dashed frame around all steps ("on the device")
+ *   loop      optional { from, to, label } return arrow (0-based step indices)
+ *   absent    optional label of a component that deliberately does not exist
+ *             (drawn outside the boundary, struck through, with a cut connector)
+ *   fig       "FIG. 02"
+ *   caption   caption text
+ *   title     accessible name for the figure (SVGs are aria-hidden; the
+ *             caption plus an sr-only ordered list carry the content)
+ */
+interface Step {
+  label: string;
+  sub?: string;
+}
+interface Props {
+  steps: Step[];
+  boundary?: string;
+  loop?: { from: number; to: number; label?: string };
+  absent?: string;
+  fig: string;
+  caption: string;
+}
+
+const { steps, boundary, loop, absent, fig, caption } = Astro.props;
+const n = steps.length;
+const pad2 = (i: number) => String(i + 1).padStart(2, '0');
+
+/* ---------------- Wide geometry ---------------- */
+const W = { bw: 156, bh: 92, gap: 44, pad: boundary ? 20 : 0, top: boundary ? 34 : 0 };
+const wInnerW = n * W.bw + (n - 1) * W.gap;
+const wBoundW = wInnerW + W.pad * 2;
+const wLoopH = loop ? 64 : 0;
+const wAbsentX = wBoundW + W.gap + 8;
+const wViewW = absent ? wAbsentX + W.bw : wBoundW;
+const wBoxY = W.top + W.pad;
+const wViewH = wBoxY + W.bh + W.pad + wLoopH + 2;
+const wx = (i: number) => W.pad + i * (W.bw + W.gap);
+
+/* ---------------- Tall geometry ---------------- */
+const T = { bw: 300, bh: 70, gap: 34, pad: boundary ? 18 : 0, top: boundary ? 32 : 0, loopW: loop ? 46 : 0 };
+const tBoundW = T.bw + T.pad * 2;
+const tInnerH = n * T.bh + (n - 1) * T.gap;
+const tBoundH = tInnerH + T.pad * 2;
+const tAbsentY = T.top + tBoundH + T.gap + 8;
+const tViewW = tBoundW + T.loopW + 2;
+const tViewH = absent ? tAbsentY + T.bh + 2 : T.top + tBoundH + 2;
+const ty = (i: number) => T.top + T.pad + i * (T.bh + T.gap);
+
+const subLines = (s?: string) => (s ? s.split('\n') : []);
+---
+
+<figure class="fig flow" data-figure>
+  <div class="fig__plate">
+    <svg
+      class="flow__svg flow__svg--wide"
+      viewBox={`-1 -1 ${wViewW + 2} ${wViewH + 2}`}
+      width={wViewW}
+      height={wViewH}
+      aria-hidden="true"
+      focusable="false"
+    >
+      {
+        boundary && (
+          <g class="flow__boundary">
+            <rect x="0" y={W.top} width={wBoundW} height={W.bh + W.pad * 2} data-draw />
+            <text x="0" y={W.top - 12} class="flow__blabel">
+              {boundary}
+            </text>
+          </g>
+        )
+      }
+      {
+        steps.map((s, i) => (
+          <g class="flow__step">
+            <rect x={wx(i)} y={wBoxY} width={W.bw} height={W.bh} data-draw />
+            <text x={wx(i) + 14} y={wBoxY + 22} class="flow__idx">
+              {pad2(i)}
+            </text>
+            <text x={wx(i) + 14} y={wBoxY + 50} class="flow__label">
+              {s.label}
+            </text>
+            {subLines(s.sub).map((line, j) => (
+              <text x={wx(i) + 14} y={wBoxY + 70 + j * 14} class="flow__sub">
+                {line}
+              </text>
+            ))}
+            {i < n - 1 && (
+              <g class="flow__arrow">
+                <path d={`M${wx(i) + W.bw} ${wBoxY + W.bh / 2}H${wx(i + 1) - 2}`} data-draw />
+                <path d={`M${wx(i + 1) - 9} ${wBoxY + W.bh / 2 - 5}L${wx(i + 1) - 2} ${wBoxY + W.bh / 2}L${wx(i + 1) - 9} ${wBoxY + W.bh / 2 + 5}`} />
+              </g>
+            )}
+          </g>
+        ))
+      }
+      {
+        loop && (
+          <g class="flow__loop">
+            <path
+              d={`M${wx(loop.from) + W.bw / 2} ${wBoxY + W.bh}V${wBoxY + W.bh + W.pad + 34}H${wx(loop.to) + W.bw / 2}V${wBoxY + W.bh + 2}`}
+              data-draw
+            />
+            <path
+              d={`M${wx(loop.to) + W.bw / 2 - 5} ${wBoxY + W.bh + 9}L${wx(loop.to) + W.bw / 2} ${wBoxY + W.bh + 2}L${wx(loop.to) + W.bw / 2 + 5} ${wBoxY + W.bh + 9}`}
+            />
+            {loop.label && (
+              <text x={(wx(loop.from) + wx(loop.to) + W.bw) / 2} y={wBoxY + W.bh + W.pad + 54} class="flow__sub" text-anchor="middle">
+                {loop.label}
+              </text>
+            )}
+          </g>
+        )
+      }
+      {
+        absent && (
+          <g class="flow__absent">
+            <path class="flow__cut" d={`M${wBoundW} ${wBoxY + W.bh / 2}H${wAbsentX}`} />
+            <text x={wBoundW + (wAbsentX - wBoundW) / 2} y={wBoxY + W.bh / 2 - 8} text-anchor="middle" class="flow__x">
+              ×
+            </text>
+            <rect x={wAbsentX} y={wBoxY} width={W.bw} height={W.bh} />
+            <text x={wAbsentX + 14} y={wBoxY + 50} class="flow__label flow__label--struck">
+              {absent}
+            </text>
+            <path class="flow__strike" d={`M${wAbsentX + 12} ${wBoxY + 45}H${wAbsentX + 14 + absent.length * 9.4}`} />
+            <text x={wAbsentX + 14} y={wBoxY + 72} class="flow__sub">
+              none
+            </text>
+          </g>
+        )
+      }
+    </svg>
+
+    <svg
+      class="flow__svg flow__svg--tall"
+      viewBox={`-1 -1 ${tViewW + 2} ${tViewH + 2}`}
+      width={tViewW}
+      height={tViewH}
+      aria-hidden="true"
+      focusable="false"
+    >
+      {
+        boundary && (
+          <g class="flow__boundary">
+            <rect x="0" y={T.top} width={tBoundW} height={tBoundH} data-draw />
+            <text x="0" y={T.top - 12} class="flow__blabel">
+              {boundary}
+            </text>
+          </g>
+        )
+      }
+      {
+        steps.map((s, i) => (
+          <g class="flow__step">
+            <rect x={T.pad} y={ty(i)} width={T.bw} height={T.bh} data-draw />
+            <text x={T.pad + T.bw - 14} y={ty(i) + 22} class="flow__idx" text-anchor="end">
+              {pad2(i)}
+            </text>
+            <text x={T.pad + 16} y={ty(i) + 30} class="flow__label">
+              {s.label}
+            </text>
+            <text x={T.pad + 16} y={ty(i) + 52} class="flow__sub">
+              {subLines(s.sub).join(' ')}
+            </text>
+            {i < n - 1 && (
+              <g class="flow__arrow">
+                <path d={`M${T.pad + T.bw / 2} ${ty(i) + T.bh}V${ty(i + 1) - 2}`} data-draw />
+                <path d={`M${T.pad + T.bw / 2 - 5} ${ty(i + 1) - 9}L${T.pad + T.bw / 2} ${ty(i + 1) - 2}L${T.pad + T.bw / 2 + 5} ${ty(i + 1) - 9}`} />
+              </g>
+            )}
+          </g>
+        ))
+      }
+      {
+        loop && (
+          <g class="flow__loop">
+            <path
+              d={`M${T.pad + T.bw} ${ty(loop.from) + T.bh / 2}H${tBoundW + T.loopW - 14}V${ty(loop.to) + T.bh / 2}H${T.pad + T.bw + 2}`}
+              data-draw
+            />
+            <path
+              d={`M${T.pad + T.bw + 9} ${ty(loop.to) + T.bh / 2 - 5}L${T.pad + T.bw + 2} ${ty(loop.to) + T.bh / 2}L${T.pad + T.bw + 9} ${ty(loop.to) + T.bh / 2 + 5}`}
+            />
+          </g>
+        )
+      }
+      {
+        absent && (
+          <g class="flow__absent">
+            <path class="flow__cut" d={`M${tBoundW / 2} ${T.top + tBoundH}V${tAbsentY}`} />
+            <text x={tBoundW / 2 + 12} y={T.top + tBoundH + (tAbsentY - T.top - tBoundH) / 2 + 5} class="flow__x">
+              ×
+            </text>
+            <rect x={T.pad} y={tAbsentY} width={T.bw} height={T.bh} />
+            <text x={T.pad + 16} y={tAbsentY + 30} class="flow__label flow__label--struck">
+              {absent}
+            </text>
+            <path class="flow__strike" d={`M${T.pad + 14} ${tAbsentY + 25}H${T.pad + 18 + absent.length * 9.4}`} />
+            <text x={T.pad + 16} y={tAbsentY + 52} class="flow__sub">
+              none
+            </text>
+          </g>
+        )
+      }
+    </svg>
+  </div>
+
+  <ol class="sr-only">
+    {steps.map((s) => <li>{s.label}{s.sub ? `: ${subLines(s.sub).join(' ')}` : ''}</li>)}
+    {loop && <li>{`Then back from ${steps[loop.from].label} to ${steps[loop.to].label}${loop.label ? ` (${loop.label})` : ''}.`}</li>}
+    {absent && <li>{`No ${absent.toLowerCase()}.`}</li>}
+  </ol>
+  <figcaption class="fig__caption">
+    <span class="fig__n">{fig}</span>
+    <span>{caption}</span>
+  </figcaption>
+</figure>
+
+<style>
+  .flow__svg {
+    width: 100%;
+    height: auto;
+    color: var(--ink);
+    overflow: visible;
+  }
+  .flow__svg--wide { display: none; }
+  .flow__svg--tall { max-width: 400px; }
+  @media (min-width: 1024px) {
+    .flow__svg--wide { display: block; }
+    .flow__svg--tall { display: none; }
+  }
+
+  .flow__svg rect {
+    fill: var(--bg);
+    stroke: var(--ink);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+  .flow__arrow path,
+  .flow__loop path {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+  .flow__loop path { stroke: var(--signal); }
+  .flow__boundary rect {
+    fill: none;
+    stroke: var(--signal);
+    stroke-dasharray: 4 4;
+  }
+  .flow__blabel {
+    fill: var(--signal-text);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .flow__idx {
+    fill: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+  }
+  .flow__label {
+    fill: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .flow__sub {
+    fill: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+  }
+  .flow__absent rect {
+    fill: none;
+    stroke: var(--rule-ui);
+    stroke-dasharray: 3 4;
+  }
+  .flow__label--struck { fill: var(--ink-3); }
+  .flow__strike {
+    stroke: var(--signal);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+  .flow__cut {
+    fill: none;
+    stroke: var(--rule-ui);
+    stroke-dasharray: 2 5;
+    vector-effect: non-scaling-stroke;
+  }
+  .flow__x {
+    fill: var(--signal-text);
+    font-family: var(--font-mono);
+    font-size: 16px;
+  }
+</style>

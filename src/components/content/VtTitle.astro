@@ -1,0 +1,27 @@
+---
+/**
+ * Row/link title → case-study H1 morph (plan 4.5). The view-transition-name is
+ * set ONLY on the clicked link's title, right before navigation, so the other
+ * titles stay inside the root snapshot and wipe with the frame cut.
+ * Markup: <a data-vt-link> … <span data-vt-title="work-title-<slug>"> … </a>
+ */
+---
+
+<script>
+  const clear = () =>
+    document.querySelectorAll<HTMLElement>('[data-vt-title]').forEach((el) => {
+      el.style.viewTransitionName = '';
+      el.style.removeProperty('view-transition-class');
+    });
+  document.addEventListener('click', (e) => {
+    const a = (e.target as Element | null)?.closest?.<HTMLAnchorElement>('a[data-vt-link]');
+    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const t = a.querySelector<HTMLElement>('[data-vt-title]');
+    if (!t) return;
+    clear();
+    t.style.viewTransitionName = t.dataset.vtTitle!;
+    t.style.setProperty('view-transition-class', 'title');
+  });
+  // Coming back via bfcache: drop stale names so they cannot collide
+  window.addEventListener('pageshow', clear);
+</script>

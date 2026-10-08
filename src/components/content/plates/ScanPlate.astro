@@ -1,0 +1,60 @@
+---
+/**
+ * Flatsnap hero plate. ILLUSTRATION of on-device text recognition (ML Kit):
+ * text lines on a page are found and read on the phone.
+ */
+const widths = [0.72, 0.9, 0.84, 0.6, 0, 0.88, 0.94, 0.7, 0.82, 0, 0.5, 0.76, 0.66];
+let y = 118;
+const rows = widths.map((w) => {
+  const r = { y, w };
+  y += w === 0 ? 14 : 20;
+  return r;
+});
+const hits = [1, 5, 6];
+---
+
+<figure class="fig plate" data-figure>
+  <div class="plate__grid plate__grid--2 dot-grid">
+    <div class="plate__panel">
+      <p class="t-label plate__k">A · Camera, on the phone</p>
+      <svg viewBox="0 0 360 460" class="plate__svg plate__svg--narrow" aria-hidden="true" focusable="false">
+        <rect x="70" y="20" width="220" height="420" rx="28" class="p-device" />
+        <rect x="84" y="62" width="192" height="336" class="p-screen" />
+        <rect x="100" y="84" width="160" height="296" class="p-paper" />
+        <rect x="116" y="100" width="64" height="8" class="p-ink" />
+        {rows.filter((r) => r.w > 0).map((r) => <rect x="116" y={r.y + 4} width={128 * r.w} height="5" class="p-line" />)}
+        {
+          hits.map((i, k) => {
+            const r = rows[i];
+            const x1 = 110;
+            const x2 = 116 + 128 * r.w + 6;
+            const y1 = r.y - 1;
+            const y2 = r.y + 14;
+            return (
+              <g class="p-bracket">
+                <path d={`M${x1} ${y1 + 4}V${y1}H${x1 + 4}`} />
+                <path d={`M${x2 - 4} ${y1}H${x2}V${y1 + 4}`} />
+                <path d={`M${x1} ${y2 - 4}V${y2}H${x1 + 4}`} />
+                <path d={`M${x2 - 4} ${y2}H${x2}V${y2 - 4}`} />
+                {/* labelled on the row after the paragraph gap, so the tag never sits on a text line */}
+                {k === 1 && <text x={x1} y={y1 - 6} class="p-mono p-mono--signal">text · line</text>}
+              </g>
+            );
+          })
+        }
+        <rect x="160" y="412" width="40" height="4" rx="2" class="p-ink" />
+      </svg>
+    </div>
+    <div class="plate__panel plate__panel--text">
+      <p class="t-label plate__k">B · Recognised text, still on the phone</p>
+      <div class="plate__ocr" aria-hidden="true">
+        {hits.map((i) => <span class="plate__ocr-line" style={`--w:${Math.round(rows[i].w * 100)}%`} />)}
+        <span class="plate__ocr-meta t-mono">ML Kit · on-device</span>
+      </div>
+    </div>
+  </div>
+  <figcaption class="fig__caption">
+    <span class="fig__n">FIG. 01</span>
+    <span>Text recognition runs on the phone with ML Kit. The page is read where it was photographed. Illustration.</span>
+  </figcaption>
+</figure>

@@ -1,0 +1,69 @@
+---
+/**
+ * SteuerApp hero plate. An ILLUSTRATION of the data path, drawn from the
+ * README facts only: receipt read on the device → offline rules → PDF mapped
+ * to ELSTER fields. Abstract shapes; no real receipt, no real form.
+ */
+const lines = [
+  [0.62, 0], [0.4, 0], [0.0, 1], [0.78, 0], [0.55, 0], [0.7, 0], [0.48, 0], [0.0, 1], [0.66, 2], [0.0, 1], [0.36, 0], [0.5, 0],
+] as const; // [width fraction, kind] kind 0 = text line, 1 = gap, 2 = the amount line
+let y = 72;
+const rows = lines.map(([w, k]) => {
+  const r = { y, w, k };
+  y += k === 1 ? 14 : 22;
+  return r;
+});
+const amount = rows.find((r) => r.k === 2)!;
+// torn bottom edge, drawn right → left
+const zig = Array.from({ length: 13 }, (_, i) => `L${280 - i * 20} ${i % 2 ? 404 : 396}`).join('');
+---
+
+<figure class="fig plate" data-figure>
+  <div class="plate__grid plate__grid--3 dot-grid">
+    <div class="plate__panel">
+      <p class="t-label plate__k">01 · Read on the device</p>
+      <svg viewBox="0 0 320 430" class="plate__svg plate__svg--narrow" aria-hidden="true" focusable="false">
+        <path class="p-paper" d={`M40 40H280V396${zig}Z`} />
+        <rect x="64" y="54" width="70" height="8" class="p-ink" />
+        {rows.filter((r) => r.k !== 1).map((r) => <rect x="64" y={r.y} width={192 * r.w} height="6" class:list={['p-line', { 'p-line--hi': r.k === 2 }]} />)}
+        {rows.filter((r) => r.k === 0).slice(0, 5).map((r) => <rect x="232" y={r.y} width="24" height="6" class="p-line" />)}
+        <rect x="216" y={amount.y} width="40" height="8" class="p-ink" />
+        <g class="p-bracket">
+          <path d={`M54 ${amount.y - 6}V${amount.y - 12}H62`} />
+          <path d={`M258 ${amount.y - 12}H266V${amount.y - 6}`} />
+          <path d={`M54 ${amount.y + 12}V${amount.y + 18}H62`} />
+          <path d={`M258 ${amount.y + 18}H266V${amount.y + 12}`} />
+        </g>
+        <rect x="54" y={amount.y - 34} width="76" height="18" class="p-tag" />
+        <text x="60" y={amount.y - 21} class="p-mono p-mono--signal">amount · €</text>
+      </svg>
+    </div>
+    <div class="plate__panel plate__panel--text">
+      <p class="t-label plate__k">02 · Rules, offline</p>
+      <ul class="plate__rules" role="list">
+        <li><span class="plate__para">§32a EStG</span><span>Income tax tariff</span></li>
+        <li><span class="plate__para">§35a EStG</span><span>Household services and tradespeople</span></li>
+        <li><span class="plate__para">AO</span><span>Filing deadlines</span></li>
+      </ul>
+    </div>
+    <div class="plate__panel">
+      <p class="t-label plate__k">03 · PDF for ELSTER</p>
+      <svg viewBox="0 0 320 430" class="plate__svg plate__svg--narrow" aria-hidden="true" focusable="false">
+        <path class="p-paper" d="M48 30H238L272 64V400H48Z" />
+        <path class="p-fold" d="M238 30V64H272" />
+        <rect x="72" y="58" width="96" height="10" class="p-ink" />
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+          <g>
+            <rect x="72" y={104 + i * 40} width={[84, 64, 96, 72, 88, 60, 80][i]} height="6" class="p-line" />
+            <rect x="182" y={96 + i * 40} width="66" height="22" class:list={['p-field', { 'p-field--hi': i === 3 }]} />
+          </g>
+        ))}
+        <text x="182" y={96 + 3 * 40 - 10} class="p-mono p-mono--signal">field ↦ ELSTER</text>
+      </svg>
+    </div>
+  </div>
+  <figcaption class="fig__caption">
+    <span class="fig__n">FIG. 01</span>
+    <span>The whole path stays on the phone: a receipt is read, the rules are applied offline, and the result lands in a PDF laid out along the ELSTER form fields. Illustration.</span>
+  </figcaption>
+</figure>

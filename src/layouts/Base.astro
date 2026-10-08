@@ -1,0 +1,124 @@
+---
+/**
+ * Base layout (plan 4.1, 4.5, 7.1, 7.2).
+ * Head: SEO (title, description, canonical, OG/Twitter, theme-color for both
+ * schemes, JSON-LD slot), blocking prefs script, optional hero-font preload.
+ * Body: skip link → Header → <main id="main"> → Footer.
+ */
+import '../styles/global.css';
+import heroFont from '../fonts/archivo-hero.woff2?url';
+import bodyFont from '../fonts/archivo-latin.woff2?url';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { prefsInline } from '../scripts/prefs-inline';
+import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, NAME, SITE_URL, THEME_COLOR } from '../site.config';
+
+interface Props {
+  /** Full <title>. Case studies: "pylbm: Walid Hemati". Defaults to the positioning line. */
+  title?: string;
+  description?: string;
+  /** Path or absolute URL; defaults to the current path on SITE_URL. */
+  canonical?: string;
+  /** Absolute or root-relative 1200×630 image. Omitted until OG generation lands. */
+  ogImage?: string;
+  ogImageAlt?: string;
+  ogType?: 'website' | 'article' | 'profile';
+  noindex?: boolean;
+  lang?: string;
+  /** One or more JSON-LD objects (see src/lib/schema.ts). */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /** Preload the ~4 KB hero subset (home only). */
+  preloadHero?: boolean;
+  /** Load the motion entry (motion.ts). Legal pages pass false to ship no motion JS. */
+  motion?: boolean;
+  bodyClass?: string;
+}
+
+const {
+  title = DEFAULT_TITLE,
+  description = DEFAULT_DESCRIPTION,
+  canonical,
+  ogImage,
+  ogImageAlt,
+  ogType = 'website',
+  noindex = false,
+  lang = 'en',
+  jsonLd,
+  preloadHero = false,
+  motion = true,
+  bodyClass,
+} = Astro.props;
+
+const site = Astro.site ?? new URL(SITE_URL);
+const canonicalURL = new URL(canonical ?? Astro.url.pathname, site).href;
+const ogImageURL = ogImage ? new URL(ogImage, site).href : undefined;
+const ldList = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+// Escape "<" so JSON-LD can never close the script element
+const ld = (o: unknown) => JSON.stringify(o).replace(/</g, '\\u003c');
+---
+
+<!doctype html>
+<html lang={lang} class="no-js" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {!noindex && <link rel="canonical" href={canonicalURL} />}
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <meta name="author" content={NAME} />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content={THEME_COLOR.light} />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content={THEME_COLOR.dark} />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="generator" content={Astro.generator} />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <!-- Open Graph / Twitter -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={NAME} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:locale" content={lang === 'de' ? 'de_DE' : 'en_GB'} />
+    {ogImageURL && <meta property="og:image" content={ogImageURL} />}
+    {ogImageURL && <meta property="og:image:width" content="1200" />}
+    {ogImageURL && <meta property="og:image:height" content="630" />}
+    {ogImageURL && <meta property="og:image:alt" content={ogImageAlt ?? title} />}
+    <meta name="twitter:card" content={ogImageURL ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {ogImageURL && <meta name="twitter:image" content={ogImageURL} />}
+
+    {preloadHero && <link rel="preload" href={heroFont} as="font" type="font/woff2" crossorigin />}
+    <!-- body face on every page: the logo/nav and headings must not reflow on swap (CLS) -->
+    <link rel="preload" href={bodyFont} as="font" type="font/woff2" crossorigin />
+
+    <!-- Blocking prefs: theme, motion toggle, js-motion + 3s safety timeout -->
+    <script is:inline set:html={prefsInline} />
+
+    {ldList.map((o) => <script type="application/ld+json" set:html={ld(o)} />)}
+
+    <slot name="head" />
+  </head>
+  <body class={bodyClass}>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="nav-progress" aria-hidden="true" data-nav-progress></div>
+    <Header />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+
+    {
+      motion && (
+        <script>
+          // Single motion entry. import.meta.glob keeps the build green if the file is missing.
+          import.meta.glob('../scripts/motion.ts', { eager: true });
+        </script>
+      )
+    }
+  </body>
+</html>

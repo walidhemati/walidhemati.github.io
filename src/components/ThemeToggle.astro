@@ -1,0 +1,144 @@
+---
+/**
+ * Theme toggle (plan 4.4 #18): circular reveal from the button via
+ * document.startViewTransition + clip-path: circle(). Instant swap when
+ * reduced motion is on (either key) or the API is missing.
+ * The choice persists in localStorage (read by the blocking inline script).
+ */
+import Icon from './Icon.astro';
+
+interface Props {
+  class?: string;
+  /** 'icon' = square icon button (header); 'text' = mono text button (footer) */
+  variant?: 'icon' | 'text';
+}
+const { class: className, variant = 'icon' } = Astro.props;
+---
+
+<button
+  type="button"
+  class:list={['theme-toggle', `theme-toggle--${variant}`, className]}
+  data-theme-toggle
+  data-js-only
+  aria-label={variant === 'icon' ? 'Switch to dark theme' : undefined}
+>
+  <span class="theme-toggle__icons" aria-hidden="true">
+    <Icon name="moon" size={16} class="theme-toggle__moon" />
+    <Icon name="sun" size={16} class="theme-toggle__sun" />
+  </span>
+  {
+    variant === 'text' && (
+      <span class="theme-toggle__text">
+        Theme: <span data-theme-label>light</span>
+      </span>
+    )
+  }
+</button>
+
+<style>
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    color: inherit;
+  }
+  .theme-toggle--icon {
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+  }
+  .theme-toggle--text {
+    min-height: 24px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-s);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .theme-toggle__icons {
+    position: relative;
+    display: grid;
+    width: 16px;
+    height: 16px;
+  }
+  .theme-toggle__icons > :global(svg) {
+    grid-area: 1 / 1;
+    transition: transform var(--dur-3) var(--ease-out), opacity var(--dur-2) var(--ease-out);
+  }
+  /* Light theme shows the moon (the action), dark shows the sun */
+  :global(.theme-toggle__sun) { opacity: 0; transform: rotate(-90deg) scale(.6); }
+  :global(:root[data-theme-effective="dark"]) :global(.theme-toggle__sun) { opacity: 1; transform: none; }
+  :global(:root[data-theme-effective="dark"]) :global(.theme-toggle__moon) { opacity: 0; transform: rotate(90deg) scale(.6); }
+</style>
+
+<script>
+  import { PREF_KEYS, THEME_COLOR } from '../site.config';
+
+  type Theme = 'light' | 'dark';
+  const root = document.documentElement;
+  const osDark = window.matchMedia('(prefers-color-scheme: dark)');
+  const osReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  const effective = (): Theme => {
+    const t = root.getAttribute('data-theme');
+    if (t === 'light' || t === 'dark') return t;
+    return osDark.matches ? 'dark' : 'light';
+  };
+
+  const sync = () => {
+    const eff = effective();
+    root.setAttribute('data-theme-effective', eff);
+    const next = eff === 'dark' ? 'light' : 'dark';
+    document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => {
+      if (btn.classList.contains('theme-toggle--icon')) btn.setAttribute('aria-label', `Switch to ${next} theme`);
+    });
+    document.querySelectorAll('[data-theme-label]').forEach((el) => (el.textContent = eff));
+    // Explicit choice overrides the media-scoped theme-color metas
+    const forced = root.getAttribute('data-theme');
+    document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((m) => {
+      const media = m.dataset.media ?? m.media;
+      m.dataset.media = media;
+      if (forced === 'light' || forced === 'dark') {
+        m.content = THEME_COLOR[forced];
+      } else {
+        m.content = media.includes('dark') ? THEME_COLOR.dark : THEME_COLOR.light;
+      }
+    });
+  };
+
+  const apply = (theme: Theme) => {
+    root.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem(PREF_KEYS.theme, theme);
+    } catch {
+      /* storage blocked: the choice lasts for this page only */
+    }
+    sync();
+  };
+
+  const motionAllowed = () => !osReduce.matches && root.getAttribute('data-motion') !== 'reduce';
+
+  const onClick = (event: MouseEvent) => {
+    const btn = event.currentTarget as HTMLElement;
+    const next: Theme = effective() === 'dark' ? 'light' : 'dark';
+    const doc = document as Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void> } };
+
+    if (!doc.startViewTransition || !motionAllowed()) {
+      apply(next);
+      return;
+    }
+    const r = btn.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    root.style.setProperty('--vt-x', `${x}px`);
+    root.style.setProperty('--vt-y', `${y}px`);
+    root.style.setProperty('--vt-r', `${radius}px`);
+    root.classList.add('is-theme-swapping');
+    const vt = doc.startViewTransition(() => apply(next));
+    vt.finished.finally(() => root.classList.remove('is-theme-swapping'));
+  };
+
+  document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => btn.addEventListener('click', onClick));
+  osDark.addEventListener('change', sync);
+  sync();
+</script>

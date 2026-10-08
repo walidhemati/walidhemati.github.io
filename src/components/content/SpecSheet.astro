@@ -1,0 +1,117 @@
+---
+/**
+ * Spec sheet (plan 5.4 #2): framed mono cells
+ * ROLE · TIMELINE · TEAM · STACK · STATUS · LINKS.
+ * HONESTY: a cell whose value is not confirmed is left out, never guessed.
+ * TIMELINE uses visibleYear() (only with yearConfirmed).
+ */
+import Icon from '../Icon.astro';
+import { STATUS_LABEL, visibleYear, type WorkData } from '../../lib/work';
+
+interface Props {
+  data: WorkData;
+}
+const { data: d } = Astro.props;
+const status = STATUS_LABEL[d.status];
+const hollow = status.mark === '○';
+const half = status.mark === '◐';
+const year = visibleYear(d);
+
+const LINK_LABEL: Record<string, string> = { repo: 'Repo', play: 'Google Play', paper: 'Paper', demo: 'Demo', privacy: 'Privacy policy' };
+const links = (Object.entries(d.links) as [string, string | undefined][]).filter(([, v]) => Boolean(v)) as [string, string][];
+
+type Cell = { k: string; v?: string; kind?: 'status' | 'links' | 'stack' };
+const cells: Cell[] = [
+  { k: 'Role', v: d.role },
+  { k: 'Timeline', v: year ?? undefined },
+  { k: 'Team', v: d.team },
+  { k: 'Stack', v: d.stack.length ? 'x' : undefined, kind: 'stack' as const },
+  { k: 'Status', v: 'x', kind: 'status' as const },
+  { k: 'Links', v: links.length ? 'x' : undefined, kind: 'links' as const },
+].filter((c) => Boolean(c.v));
+---
+
+<dl class="spec" style={`--spec-n:${cells.length}`}>
+  {
+    cells.map((c) => (
+      <div class:list={['spec__cell', c.kind && `spec__cell--${c.kind}`]}>
+        <dt class="t-label">{c.k}</dt>
+        <dd class="t-mono">
+          {c.kind === 'status' ? (
+            <span class="spec__status">
+              <span class:list={['spec__dot', { 'spec__dot--hollow': hollow, 'spec__dot--half': half }]} aria-hidden="true" />
+              {status.text}
+            </span>
+          ) : c.kind === 'stack' ? (
+            <ul class="spec__list" role="list">
+              {d.stack.map((s) => (
+                <li>{s}</li>
+              ))}
+            </ul>
+          ) : c.kind === 'links' ? (
+            <ul class="spec__list" role="list">
+              {links.map(([k, href]) => (
+                <li>
+                  <a class="spec__link" href={href} rel="noopener">
+                    {LINK_LABEL[k] ?? k}
+                    <Icon name="arrow-up-right" size={12} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            c.v
+          )}
+        </dd>
+      </div>
+    ))
+  }
+</dl>
+
+<style>
+  .spec {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0;
+    border-top: 1px solid var(--rule-strong);
+    border-left: 1px solid var(--rule);
+  }
+  .spec__cell {
+    display: grid;
+    align-content: start;
+    gap: var(--sp-3);
+    min-width: 0;
+    padding: var(--sp-4);
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .spec__cell--stack { grid-column: 1 / -1; }
+  @media (min-width: 640px) {
+    .spec { grid-template-columns: repeat(var(--spec-n), minmax(0, 1fr)); }
+    .spec__cell--stack { grid-column: auto; }
+  }
+  @media (min-width: 1024px) {
+    .spec__cell { padding: var(--sp-5); min-height: 8.5rem; }
+  }
+  .spec dd { margin: 0; color: var(--ink); }
+  .spec__list { display: grid; gap: 2px; }
+  .spec__status { display: inline-flex; align-items: center; gap: var(--sp-2); }
+  .spec__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--signal);
+    flex: none;
+  }
+  .spec__dot--hollow { background: transparent; box-shadow: inset 0 0 0 1px var(--ink-3); }
+  .spec__dot--half { background: linear-gradient(90deg, var(--signal) 50%, transparent 50%); box-shadow: inset 0 0 0 1px var(--signal); }
+  .spec__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 24px;
+    color: var(--signal-text);
+    text-decoration: none;
+  }
+  .spec__link:hover { text-decoration: underline; text-underline-offset: .2em; }
+</style>

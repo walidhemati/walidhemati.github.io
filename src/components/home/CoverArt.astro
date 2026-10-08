@@ -1,0 +1,244 @@
+---
+/**
+ * Abstract cover art per project (plan 3.5 #5, M-Assets).
+ * Real screenshots are pending, so every cover is a drawn, synthetic plate:
+ * dot grid, brackets, flow lines. Nothing here is labelled or styled as a
+ * screenshot, and nothing depicts customer material (Shikenso is abstract shapes).
+ * Generated at build time; decorative (aria-hidden), the row text carries meaning.
+ *
+ * Colours come from tokens, so the art follows light/dark automatically.
+ */
+interface Props {
+  slug: string;
+  class?: string;
+}
+const { slug, class: className } = Astro.props;
+
+const W = 480;
+const H = 300;
+
+// mulberry32, deterministic per slug
+function prng(seed: number) {
+  let a = seed;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const seed = [...slug].reduce((s, c) => (s * 31 + c.charCodeAt(0)) | 0, 7);
+const rand = prng(seed);
+const f = (n: number) => n.toFixed(1);
+
+/* ---------- pylbm: primary vortex streamlines in a lid-driven cavity ---------- */
+function vortex() {
+  const cx = 250, cy = 150, paths: string[] = [];
+  for (let k = 1; k <= 9; k++) {
+    const rx = 18 * k, ry = 13 * k;
+    let d = '';
+    for (let i = 0; i <= 72; i++) {
+      const a = (i / 72) * Math.PI * 2;
+      // skew the loops toward the moving lid (top) like the real primary vortex
+      const wob = 1 + 0.08 * Math.sin(a * 2 + k * 0.4);
+      const x = cx + Math.cos(a) * rx * wob + k * 1.6;
+      const y = cy + Math.sin(a) * ry * wob - k * 1.8;
+      d += `${i ? 'L' : 'M'}${f(x)} ${f(y)}`;
+    }
+    paths.push(d + 'Z');
+  }
+  return paths;
+}
+
+/* ---------- eeg: stacked channels ---------- */
+function channels(n: number) {
+  const out: string[] = [];
+  for (let c = 0; c < n; c++) {
+    const base = 52 + c * 28;
+    const ph = rand() * 6.28;
+    let d = '', prev = 0;
+    for (let i = 0; i <= 120; i++) {
+      const t = i / 120;
+      let v = Math.sin(t * 6.28 * (9 + c) + ph) * 0.5 + Math.sin(t * 6.28 * 23 + ph * 2) * 0.2 + (rand() - 0.5) * 0.6;
+      v = prev * 0.4 + v * 0.6;
+      prev = v;
+      d += `${i ? 'L' : 'M'}${f(32 + t * 230)} ${f(base + v * 9)}`;
+    }
+    out.push(d);
+  }
+  return out;
+}
+function cluster(cx: number, cy: number, n: number, s: number) {
+  return Array.from({ length: n }, () => {
+    const a = rand() * 6.28, r = Math.sqrt(rand()) * s;
+    return [cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.8];
+  });
+}
+
+const vort = slug === 'pylbm' ? vortex() : [];
+const eeg = slug === 'eeg-emotion-vae' ? channels(7) : [];
+const clusters =
+  slug === 'eeg-emotion-vae'
+    ? [cluster(345, 110, 14, 30), cluster(405, 185, 14, 26), cluster(330, 210, 12, 22)]
+    : [];
+---
+
+<svg
+  class:list={['cover', `cover--${slug}`, className]}
+  viewBox={`0 0 ${W} ${H}`}
+  preserveAspectRatio="xMidYMid slice"
+  aria-hidden="true"
+  focusable="false"
+>
+  {
+    slug === 'shikenso' && (
+      <g>
+        {/* Synthetic frame: abstract shapes only, no logos or footage */}
+        <rect x="40" y="36" width="400" height="228" class="cover__frame" />
+        <path d="M40 196 C 140 176, 300 214, 440 186" class="cover__thin" />
+        <circle cx="150" cy="140" r="28" class="cover__fill-2" />
+        <rect x="262" y="96" width="74" height="52" class="cover__fill-2" />
+        <path d="M352 222 l26 -44 l26 44 z" class="cover__fill-2" />
+        <g class="cover__box">
+          <path d="M114 104 h10 M114 104 v10 M186 104 h-10 M186 104 v10 M114 176 h10 M114 176 v-10 M186 176 h-10 M186 176 v-10" />
+          <path d="M254 88 h10 M254 88 v10 M344 88 h-10 M344 88 v10 M254 156 h10 M254 156 v-10 M344 156 h-10 M344 156 v-10" />
+        </g>
+        <text x="114" y="98" class="cover__label">object</text>
+        <text x="254" y="82" class="cover__label">object</text>
+        <text x="40" y="26" class="cover__mono">CAM_01 · SYNTHETIC · FRAME 0001</text>
+        <path d="M40 278 h400" class="cover__thin" />
+        {Array.from({ length: 21 }, (_, i) => (
+          <path d={`M${40 + i * 20} 274 v8`} class="cover__thin" />
+        ))}
+      </g>
+    )
+  }
+
+  {
+    slug === 'pylbm' && (
+      <g>
+        <rect x="120" y="30" width="250" height="240" class="cover__frame" />
+        <path d="M120 30 h250" class="cover__lid" />
+        <path d="M300 18 h40 m-6 -5 l6 5 l-6 5" class="cover__accent-thin" />
+        <g class="cover__flow">
+          {vort.map((d, i) => (
+            <path d={d} style={`opacity:${(0.35 + i * 0.07).toFixed(2)}`} />
+          ))}
+        </g>
+        <path d="M128 262 q 14 -4 18 -18 q -16 2 -18 18" class="cover__thin" />
+        <path d="M362 262 q -16 -6 -20 -22 q 18 4 20 22" class="cover__thin" />
+        <path d="M245 30 v240" class="cover__dash" />
+        <text x="120" y="290" class="cover__mono">D2Q9 · LID-DRIVEN CAVITY</text>
+      </g>
+    )
+  }
+
+  {
+    slug === 'steuerapp' && (
+      <g>
+        <path
+          d="M176 28 h128 v228 l-10.7 10 l-10.7 -10 l-10.7 10 l-10.7 -10 l-10.7 10 l-10.7 -10 l-10.7 10 l-10.7 -10 l-10.7 10 l-10.7 -10 l-10.7 10 l-10.7 -10 z"
+          class="cover__paper"
+        />
+        {[60, 78, 96, 132, 150, 168, 204, 222].map((y, i) => (
+          <path d={`M194 ${y} h${[70, 52, 84, 60, 88, 46, 76, 40][i]}`} class="cover__ink-line" />
+        ))}
+        {[132, 150, 168].map((y) => (
+          <path d={`M270 ${y} h16`} class="cover__ink-line" />
+        ))}
+        <g class="cover__box">
+          <path d="M184 120 h10 M184 120 v10 M296 120 h-10 M296 120 v10 M184 178 h10 M184 178 v-10 M296 178 h-10 M296 178 v-10" />
+        </g>
+        <text x="184" y="114" class="cover__label">ocr · on-device</text>
+        <path d="M330 149 h60" class="cover__accent-thin" />
+        <rect x="390" y="122" width="54" height="54" class="cover__frame" />
+        <path d="M402 160 l10 -12 l8 7 l12 -16" class="cover__thin" />
+        <text x="330" y="196" class="cover__mono">OFFLINE BY DEFAULT</text>
+      </g>
+    )
+  }
+
+  {
+    slug === 'flatsnap' && (
+      <g>
+        <rect x="176" y="22" width="128" height="256" rx="0" class="cover__frame" />
+        <rect x="190" y="50" width="100" height="134" class="cover__paper" />
+        {[66, 78, 90, 102, 126, 138, 150].map((y, i) => (
+          <path d={`M200 ${y} h${[70, 56, 78, 40, 74, 62, 50][i]}`} class="cover__ink-line" />
+        ))}
+        <g class="cover__box">
+          <path d="M184 44 h12 M184 44 v12 M296 44 h-12 M296 44 v12 M184 190 h12 M184 190 v-12 M296 190 h-12 M296 190 v-12" />
+        </g>
+        <circle cx="240" cy="236" r="16" class="cover__frame" />
+        <circle cx="240" cy="236" r="10" class="cover__fill-2" />
+        <path d="M60 150 h96" class="cover__dash" />
+        <path d="M324 150 h96" class="cover__dash" />
+        <text x="60" y="140" class="cover__mono">SCAN</text>
+        <text x="324" y="140" class="cover__mono">TEXT · ON-DEVICE</text>
+      </g>
+    )
+  }
+
+  {
+    slug === 'eeg-emotion-vae' && (
+      <g>
+        {eeg.map((d, i) => (
+          <path d={d} class={i === 3 ? 'cover__accent-thin' : 'cover__thin'} />
+        ))}
+        <path d="M282 40 v220 M282 260 h170" class="cover__thin" />
+        {clusters.map((pts, ci) =>
+          pts.map(([x, y]) =>
+            ci === 0 ? (
+              <circle cx={f(x)} cy={f(y)} r="2.6" class="cover__accent-dot" />
+            ) : ci === 1 ? (
+              <circle cx={f(x)} cy={f(y)} r="2.6" class="cover__fill-2" />
+            ) : (
+              <circle cx={f(x)} cy={f(y)} r="2.6" class="cover__hollow" />
+            ),
+          ),
+        )}
+        <text x="32" y="30" class="cover__mono">CH 01–07</text>
+        <text x="290" y="30" class="cover__mono">LATENT z₁ · z₂</text>
+      </g>
+    )
+  }
+
+  {
+    !['shikenso', 'pylbm', 'steuerapp', 'flatsnap', 'eeg-emotion-vae'].includes(slug) && (
+      <g>
+        <rect x="120" y="60" width="240" height="180" class="cover__frame" />
+        <path d="M120 200 C 200 120, 280 220, 360 120" class="cover__accent-thin" />
+      </g>
+    )
+  }
+</svg>
+
+<style>
+  .cover {
+    display: block;
+    width: 100%;
+    height: 100%;
+    font-family: var(--font-mono);
+    /* dot grid as CSS, not an SVG <pattern>: duplicate ids across the plate,
+       rail and thumbnails would break inside display:none subtrees */
+    background-color: var(--bg-raised);
+    background-image: radial-gradient(var(--grid-dot-strong, var(--grid-dot)) 1px, transparent 1.2px);
+    background-size: 16px 16px;
+    background-position: 8px 8px;
+  }
+  .cover :global(.cover__frame) { fill: none; stroke: var(--ink); stroke-width: 1.25; }
+  .cover :global(.cover__thin) { fill: none; stroke: var(--ink-3); stroke-width: 1; }
+  .cover :global(.cover__dash) { fill: none; stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 4; }
+  .cover :global(.cover__lid) { fill: none; stroke: var(--signal); stroke-width: 3; }
+  .cover :global(.cover__accent-thin) { fill: none; stroke: var(--signal); stroke-width: 1.25; }
+  .cover :global(.cover__accent-dot) { fill: var(--signal); }
+  .cover :global(.cover__hollow) { fill: none; stroke: var(--ink); stroke-width: 1; }
+  .cover :global(.cover__flow path) { fill: none; stroke: var(--ink); stroke-width: 1; }
+  .cover :global(.cover__fill-2) { fill: var(--ink); opacity: .14; }
+  .cover :global(.cover__paper) { fill: var(--bg); stroke: var(--ink); stroke-width: 1.25; }
+  .cover :global(.cover__ink-line) { stroke: var(--ink-3); stroke-width: 4; opacity: .55; }
+  .cover :global(.cover__box) { fill: none; stroke: var(--signal); stroke-width: 1.75; }
+  .cover :global(.cover__label) { fill: var(--signal-text); font-size: 10px; letter-spacing: .02em; }
+  .cover :global(.cover__mono) { fill: var(--ink-3); font-size: 9px; letter-spacing: .08em; }
+</style>

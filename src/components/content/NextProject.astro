@@ -1,0 +1,78 @@
+---
+/**
+ * Next project (plan 5.4 #11): a full-width row that inverts on hover and
+ * hands its title to the next page's H1 (view-transition-name set on click,
+ * see VtTitle script) while the frame-cut page transition runs.
+ */
+import Icon from '../Icon.astro';
+import { indexLabel, titleVT, type Work } from '../../lib/work';
+interface Props {
+  next: Work;
+}
+const { next } = Astro.props;
+const n = indexLabel(next.data);
+---
+
+<nav class="next" aria-label="Next project">
+  <a class="next__link" href={`/work/${next.id}/`} data-vt-link>
+    <span class="wrap next__inner">
+      <span class="t-label next__k">Next project {n && <span class="next__n">· {n}</span>}</span>
+      <span class="next__title" data-vt-title={titleVT(next.id)}>{next.data.title}</span>
+      <span class="next__line">{next.data.discipline}</span>
+      <span class="next__arrow"><Icon name="arrow-right" size={40} strokeWidth={1.25} /></span>
+    </span>
+  </a>
+</nav>
+
+<style>
+  .next { border-top: 1px solid var(--rule-strong); }
+  .next__link {
+    display: block;
+    position: relative;
+    isolation: isolate;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .next__link::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--ink);
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path var(--dur-3) var(--ease-out);
+  }
+  .next__link:hover,
+  .next__link:focus-visible { color: var(--bg); }
+  .next__link:hover::before,
+  .next__link:focus-visible::before { clip-path: inset(0); }
+  .next__link:hover .next__k,
+  .next__link:focus-visible .next__k,
+  .next__link:hover .next__line,
+  .next__link:focus-visible .next__line { color: inherit; }
+  .next__link:focus-visible { outline-offset: -4px; }
+
+  .next__inner {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--sp-3) var(--sp-5);
+    align-items: end;
+    padding-block: var(--sp-8);
+  }
+  .next__k { grid-column: 1 / -1; }
+  .next__title {
+    font-size: var(--fs-h2);
+    font-stretch: 72%;
+    font-weight: 700;
+    line-height: .9;
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+  }
+  .next__line { grid-column: 1; font-family: var(--font-mono); font-size: var(--fs-mono); color: var(--ink-2); }
+  .next__arrow { grid-column: 2; grid-row: 2 / span 2; align-self: center; transition: transform var(--dur-3) var(--ease-out); }
+  .next__link:hover .next__arrow { transform: translateX(8px); }
+  @media (min-width: 1024px) {
+    .next__inner { padding-block: var(--sp-9); }
+    .next__title { font-size: var(--fs-h1); }
+  }
+</style>

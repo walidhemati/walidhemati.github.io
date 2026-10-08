@@ -1,0 +1,378 @@
+---
+/**
+ * About (plan 5.5). Origin option B: "Engineer, now in Freiburg." No origin route.
+ *  - Short | Long bio toggle (aria-pressed). No JS: the long bio shows and the
+ *    toggle is hidden; with JS the short bio is the default. The swap is CSS on
+ *    a data attribute set before paint, so there is no layout shift.
+ *  - Timeline: confirmed years only (CV: 2008–17, 2017–19, 2019–23, 07–09/2021).
+ *    Current roles show "Now" instead of a guessed year.
+ *  - Toolkit by depth (grouping from the plan; Walid confirms).
+ *  - Languages from the CV. German level is not stated yet, so it is not shown.
+ *  - Portrait via astro:assets Picture (AVIF/WebP) in a bracket frame.
+ */
+import { Picture } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Brackets from '../components/Brackets.astro';
+import Icon from '../components/Icon.astro';
+import portrait from '../assets/portrait.jpg';
+import { CV_PAGE, EMAIL, NAME, SOCIALS } from '../site.config';
+import { personSchema } from '../lib/schema';
+
+const timeline = [
+  { when: 'Now', what: 'Computer vision on broadcast and streamed video', where: 'Shikenso, Freiburg', now: true },
+  { when: 'Now', what: 'Student', where: 'University of Freiburg', now: true },
+  { when: '2019–2023', what: 'B.Sc. Computer Engineering', where: 'Istanbul Kültür University' },
+  { when: '07–09/2021', what: 'Web developer intern', where: 'Miss Diamond, Istanbul' },
+  { when: '2017–2019', what: 'High school', where: 'Beşir Balcıoğlu Anadolu Lisesi, Istanbul' },
+  { when: '2008–2017', what: 'School', where: 'Sharjah Indian School, UAE' },
+];
+
+const toolkit = [
+  { depth: 'Daily', items: ['Python', 'PyTorch', 'Computer vision on video', 'Git'] },
+  { depth: 'Comfortable', items: ['Kotlin / Android', 'C++ (Eigen, Meson, gtest)', 'CUDA via PyTorch', 'MATLAB', 'SQL'] },
+  { depth: 'Have used', items: ['C', 'Java', 'C#', 'Flutter / Dart', 'JavaScript', 'Solidity / Truffle'] },
+];
+
+const languages = [
+  { lang: 'Dari', level: 'Native' },
+  { lang: 'English', level: 'C1' },
+  { lang: 'Persian', level: 'B2 listening · B1 spoken' },
+  { lang: 'Turkish', level: 'B1' },
+  { lang: 'Urdu / Hindi', level: 'B1 spoken' },
+  { lang: 'Arabic', level: 'A1–A2' },
+];
+---
+
+<Base
+  title={`About: ${NAME}`}
+  description="Walid Hemati is an ML and software engineer in Freiburg: computer vision at Shikenso, privacy-first Android apps, scientific computing."
+  ogType="profile"
+  jsonLd={personSchema()}
+>
+  <section class="ab-hero wrap grid">
+    <p class="col-label t-label ab-hero__label">[ 02 ] About</p>
+    <h1 class="ab-title">Engineer, now in <span class="t-accent">Freiburg</span>.</h1>
+  </section>
+
+  <section class="ab-intro wrap grid" aria-label="Bio">
+    <figure class="ab-portrait">
+      <div class="ab-portrait__frame">
+        <Picture
+          src={portrait}
+          formats={['avif', 'webp']}
+          widths={[320, 640]}
+          sizes="(min-width: 1024px) 26vw, (min-width: 640px) 40vw, 80vw"
+          alt={`Portrait of ${NAME}`}
+          class="ab-portrait__img"
+        />
+        <Brackets size="18px" inset="10px" label="walid_hemati · person" />
+      </div>
+    </figure>
+
+    <div class="ab-bio" data-bio data-mode="short">
+      <div class="ab-toggle" role="group" aria-label="Bio length">
+        <button type="button" class="ab-toggle__btn" aria-pressed="true" data-bio-set="short">Short</button>
+        <button type="button" class="ab-toggle__btn" aria-pressed="false" data-bio-set="long">Long</button>
+      </div>
+
+      <div class="ab-bio__panel ab-bio__panel--short" data-panel="short">
+        <p class="ab-bio__big">
+          I'm Walid, an ML and software engineer in Freiburg. I work on computer vision for broadcast and streamed video at Shikenso, build
+          Android apps that keep your data <span class="t-accent">on the device</span>, and write scientific code in Python and C++.
+        </p>
+      </div>
+
+      <div class="ab-bio__panel ab-bio__panel--long" data-panel="long">
+        <p class="ab-bio__big">
+          I'm Walid, an ML and software engineer in Freiburg. I like work where the result can be checked: a detection that holds up on
+          real footage, a solver that matches the benchmark, an app that does what its privacy policy says.
+        </p>
+        <div class="ab-story">
+          <p>
+            <span class="ab-story__n t-label">01</span>
+            I went to Sharjah Indian School in the UAE from 2008 to 2017, then moved to Istanbul and finished high school at Beşir
+            Balcıoğlu Anadolu Lisesi in 2019.
+          </p>
+          <p>
+            <span class="ab-story__n t-label">02</span>
+            I studied Computer Engineering at Istanbul Kültür University from 2019 to 2023. By graduation my projects included a
+            variational autoencoder that decodes emotion from EEG, a review paper on machine-learning-based Android malware detection,
+            and a summer as a web developer intern at Miss Diamond in 2021.
+          </p>
+          <p>
+            <span class="ab-story__n t-label">03</span>
+            Now I'm in Freiburg. I study at the University of Freiburg and work at Shikenso, where I do computer vision on broadcast and
+            streamed video. My own projects include <a href="/work/pylbm/">pylbm</a>, a GPU Lattice-Boltzmann
+            solver; <a href="/work/steuerapp/">SteuerApp</a>, an offline tax recorder for Android; and{' '}
+            <a href="/work/flatsnap/">Flatsnap</a>, an on-device document scanner.
+          </p>
+        </div>
+      </div>
+
+      <p class="ab-links cluster">
+        <a class="btn" href="/work/">See the work <Icon name="arrow-right" size={14} /></a>
+        <a class="btn" href={CV_PAGE}>CV <Icon name="arrow-right" size={14} /></a>
+        <a class="btn" href={`mailto:${EMAIL}`}><Icon name="mail" size={14} /> Email</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section wrap grid" aria-labelledby="ab-tl">
+    <div class="col-label">
+      <h2 id="ab-tl" class="t-label ab-h">[ 01 ] Timeline</h2>
+    </div>
+    <ol class="col-copy ab-tl" role="list">
+      {
+        timeline.map((t) => (
+          <li class:list={['ab-tl__item', { 'is-now': t.now }]}>
+            <span class="ab-tl__node" aria-hidden="true" />
+            <span class="ab-tl__when t-mono">{t.when}</span>
+            <span class="ab-tl__what">{t.what}</span>
+            <span class="ab-tl__where">{t.where}</span>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section class="section wrap grid" aria-labelledby="ab-tk">
+    <div class="col-label">
+      <h2 id="ab-tk" class="t-label ab-h">[ 02 ] Toolkit, by depth</h2>
+    </div>
+    <dl class="col-wide ab-tk">
+      {
+        toolkit.map((g, i) => (
+          <div class="ab-tk__row">
+            <dt>
+              <span class="t-label ab-tk__n">{String(i + 1).padStart(2, '0')}</span>
+              <span class="ab-tk__depth">{g.depth}</span>
+            </dt>
+            <dd>
+              <ul class="ab-tk__items" role="list">
+                {g.items.map((it) => (
+                  <li>{it}</li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+  </section>
+
+  <section class="section wrap grid" aria-labelledby="ab-lang">
+    <div class="col-label">
+      <h2 id="ab-lang" class="t-label ab-h">[ 03 ] Languages</h2>
+    </div>
+    <dl class="col-wide ab-lang">
+      {
+        languages.map((l) => (
+          <div class="ab-lang__item">
+            <dt>{l.lang}</dt>
+            <dd class="t-mono">{l.level}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </section>
+
+  <section class="section wrap grid" aria-labelledby="ab-off">
+    <div class="col-label">
+      <h2 id="ab-off" class="t-label ab-h">[ 04 ] Off-screen</h2>
+    </div>
+    <div class="col-copy">
+      <p class="ab-off">
+        Mobile photography, drawing, travel, reading, sport, and the occasional game. Find me on{' '}
+        <a href={SOCIALS.github.url} rel="me noopener">GitHub</a> and <a href={SOCIALS.linkedin.url} rel="me noopener">LinkedIn</a>.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-bio]').forEach((bio) => {
+    const btns = [...bio.querySelectorAll<HTMLButtonElement>('[data-bio-set]')];
+    btns.forEach((b) =>
+      b.addEventListener('click', () => {
+        const mode = b.dataset.bioSet!;
+        bio.dataset.mode = mode;
+        btns.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      }),
+    );
+  });
+</script>
+
+<style>
+  /* ---- Hero ---- */
+  .ab-hero { padding-block: var(--sp-9) var(--sp-7); row-gap: var(--sp-5); }
+  .ab-title {
+    font-size: var(--fs-h1);
+    font-stretch: 72%;
+    font-weight: 700;
+    line-height: .88;
+    letter-spacing: -0.045em;
+    max-width: 11ch;
+  }
+  @media (min-width: 1024px) {
+    .ab-hero { padding-block: var(--sp-10) var(--sp-9); }
+    .ab-hero__label { padding-top: 1.2em; }
+    .ab-title { grid-column: 4 / -1; }
+  }
+
+  /* ---- Intro: portrait + bio ---- */
+  .ab-intro { row-gap: var(--sp-8); padding-bottom: var(--section-pad); }
+  .ab-portrait { margin: 0; }
+  .ab-portrait__frame {
+    position: relative;
+    width: min(100%, 360px);
+    margin-top: var(--sp-5);
+  }
+  .ab-portrait__frame :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 640 / 641;
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.05);
+  }
+  :global(:root[data-theme-effective="dark"]) .ab-portrait__frame :global(img) { filter: grayscale(1) contrast(1.05) brightness(.9); }
+  @media (min-width: 640px) {
+    .ab-portrait { grid-column: 1 / span 3; }
+    .ab-bio { grid-column: 4 / -1; }
+  }
+  @media (min-width: 1024px) {
+    .ab-portrait { grid-column: 1 / span 3; }
+    .ab-bio { grid-column: 5 / span 7; }
+  }
+
+  .ab-bio { display: grid; gap: var(--sp-6); align-content: start; }
+  .ab-toggle {
+    display: inline-flex;
+    width: fit-content;
+    padding: 3px;
+    border: 1px solid var(--rule-ui);
+    border-radius: var(--radius-pill);
+  }
+  .ab-toggle__btn {
+    min-height: 32px;
+    padding: 0 var(--sp-4);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    color: var(--ink-2);
+    transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
+  }
+  .ab-toggle__btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  :global(html.no-js) .ab-toggle { display: none; }
+
+  /* No JS: long only. JS: driven by data-mode (set in the markup, so no shift). */
+  :global(html.no-js) .ab-bio__panel--short { display: none; }
+  :global(html.js) .ab-bio[data-mode="short"] .ab-bio__panel--long,
+  :global(html.js) .ab-bio[data-mode="long"] .ab-bio__panel--short { display: none; }
+
+  /* intro reads as text, not display copy */
+  .ab-bio__big {
+    font-size: clamp(1.25rem, 1.05rem + .5vw, 1.5rem);
+    line-height: 1.4;
+    letter-spacing: -0.005em;
+    word-spacing: .05em;
+    max-width: 34ch;
+  }
+  .ab-story { display: grid; gap: var(--sp-5); margin-top: var(--sp-7); border-top: 1px solid var(--rule); padding-top: var(--sp-6); }
+  .ab-story p { max-width: var(--measure); }
+  .ab-story__n { display: block; margin-bottom: var(--sp-2); color: var(--signal-text); }
+  .ab-story a { color: var(--signal-text); text-decoration-color: currentColor; }
+  .ab-links { --cluster: var(--sp-3); }
+
+  /* ---- Section heads ---- */
+  .ab-h { margin-bottom: var(--sp-6); font-size: var(--fs-mono-s); line-height: 1.3; letter-spacing: .06em; font-stretch: 100%; }
+  /* one rule system: the column-width rules inside each section (no full-bleed hairlines) */
+  @media (min-width: 1024px) { .ab-h { margin: 0; } }
+
+  /* ---- Timeline: vertical 1px rule with ⌜ nodes, newest first ---- */
+  .ab-tl { position: relative; padding-left: var(--sp-6); }
+  .ab-tl::before {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: .6em;
+    bottom: .6em;
+    width: 1px;
+    background: var(--rule-ui);
+  }
+  .ab-tl__item {
+    position: relative;
+    display: grid;
+    gap: var(--sp-1);
+    padding-bottom: var(--sp-6);
+  }
+  .ab-tl__item:last-child { padding-bottom: 0; }
+  .ab-tl__node {
+    position: absolute;
+    left: calc(var(--sp-6) * -1);
+    top: .35em;
+    width: 11px;
+    height: 11px;
+    border-top: 1.5px solid var(--ink);
+    border-left: 1.5px solid var(--ink);
+    background: var(--bg);
+  }
+  .is-now .ab-tl__node { border-color: var(--signal); }
+  .ab-tl__when { color: var(--ink-3); }
+  .is-now .ab-tl__when { color: var(--signal-text); }
+  .ab-tl__what { font-size: min(var(--fs-h3), 1.75rem); font-weight: 600; line-height: 1.1; letter-spacing: -0.015em; font-stretch: 90%; }
+  .ab-tl__where { color: var(--ink-2); }
+  @media (min-width: 640px) {
+    .ab-tl__item { grid-template-columns: 8.5rem 1fr; column-gap: var(--sp-5); }
+    .ab-tl__when { grid-row: span 2; padding-top: .45em; }
+  }
+
+  /* ---- Toolkit ---- */
+  .ab-tk { margin: 0; border-top: 1px solid var(--rule-strong); }
+  .ab-tk__row {
+    display: grid;
+    gap: var(--sp-3);
+    padding: var(--sp-5) 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .ab-tk__row dt { display: flex; gap: var(--sp-3); align-items: baseline; }
+  .ab-tk__n { color: var(--signal-text); }
+  .ab-tk__depth { font-size: var(--fs-h3); font-weight: 600; font-stretch: 85%; letter-spacing: -0.02em; line-height: 1; }
+  .ab-tk__row dd { margin: 0; }
+  .ab-tk__items { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+  .ab-tk__items li {
+    padding: var(--sp-1) var(--sp-3);
+    border: 1px solid var(--rule-ui);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+  }
+  .ab-tk__row:nth-child(3) .ab-tk__items li { color: var(--ink-2); border-style: dashed; }
+  @media (min-width: 1024px) {
+    .ab-tk__row { grid-template-columns: minmax(0, 3fr) minmax(0, 6fr); align-items: center; }
+  }
+
+  /* ---- Languages ---- */
+  .ab-lang {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid var(--rule-strong);
+    border-left: 1px solid var(--rule);
+  }
+  .ab-lang__item {
+    display: grid;
+    gap: var(--sp-2);
+    padding: var(--sp-4);
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .ab-lang__item dt { font-size: var(--fs-h3); font-weight: 600; font-stretch: 85%; letter-spacing: -0.02em; line-height: 1; }
+  .ab-lang__item dd { margin: 0; color: var(--ink-2); }
+  @media (min-width: 1024px) {
+    .ab-lang { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .ab-lang__item { padding: var(--sp-5); min-height: 8rem; align-content: space-between; }
+  }
+
+  .ab-off { font-size: var(--fs-lead); line-height: 1.3; letter-spacing: -0.01em; max-width: 34ch; }
+  .ab-off a { color: var(--signal-text); text-decoration-color: currentColor; }
+</style>

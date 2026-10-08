@@ -1,0 +1,60 @@
+---
+/**
+ * TL;DR (plan 5.4 #4): three rows, problem · approach · result.
+ * Rendered as a definition list so the three parts are announced as pairs.
+ */
+interface Props {
+  problem: string;
+  approach: string;
+  result: string;
+}
+const { problem, approach, result } = Astro.props;
+const rows = [
+  ['Problem', problem],
+  ['Approach', approach],
+  ['Result', result],
+] as const;
+---
+
+<section class="tldr" aria-labelledby="tldr-h">
+  <h2 id="tldr-h" class="tldr__h t-label">TL;DR</h2>
+  <dl class="tldr__list">
+    {
+      rows.map(([k, v], i) => (
+        <div class="tldr__row">
+          <dt class="t-label">
+            <span class="tldr__n">{String(i + 1).padStart(2, '0')}</span> {k}
+          </dt>
+          <dd>{v}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</section>
+
+<style>
+  .tldr {
+    border-top: 1px solid var(--rule-strong);
+    padding-top: var(--sp-4);
+  }
+  .tldr__h { margin: 0 0 var(--sp-4); font-size: var(--fs-mono-s); letter-spacing: .06em; line-height: 1.3; font-stretch: 100%; }
+  .tldr__list { margin: 0; }
+  .tldr__row {
+    display: grid;
+    gap: var(--sp-2);
+    padding-block: var(--sp-4);
+    border-bottom: 1px solid var(--rule);
+  }
+  .tldr__row:last-child { border-bottom: 0; }
+  .tldr__row dd {
+    margin: 0;
+    font-size: var(--fs-lead);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    text-wrap: pretty;
+  }
+  .tldr__n { color: var(--signal-text); }
+  @media (min-width: 640px) {
+    .tldr__row { grid-template-columns: 9rem 1fr; gap: var(--sp-5); align-items: baseline; }
+  }
+</style>

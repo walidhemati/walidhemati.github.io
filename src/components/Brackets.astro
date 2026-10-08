@@ -1,0 +1,82 @@
+---
+/**
+ * Bounding-box corner brackets ⌜ ⌝ ⌞ ⌟ (plan section 2, brand device).
+ * Drawn with CSS borders so the corners are pixel-crisp at any size.
+ * Decorative only (aria-hidden). Place inside a positioned parent.
+ *
+ *   <span class="has-brackets"><Brackets />…</span>
+ *
+ * Props
+ *   size       corner arm length (CSS length), default 10px
+ *   inset      offset outside the parent box (CSS length), default 0
+ *   label      optional mono detector label, e.g. "walid_hemati · person"
+ *   tone       'signal' (default) | 'ink'
+ *   vtName     optional view-transition-name (e.g. nav-brackets)
+ */
+interface Props {
+  size?: string;
+  inset?: string;
+  label?: string;
+  tone?: 'signal' | 'ink';
+  vtName?: string;
+  class?: string;
+}
+
+const { size = '10px', inset = '0px', label, tone = 'signal', vtName, class: className } = Astro.props;
+const style = [
+  `--br-size:${size}`,
+  `--br-inset:${inset}`,
+  vtName ? `view-transition-name:${vtName}` : '',
+]
+  .filter(Boolean)
+  .join(';');
+---
+
+<span class:list={['brackets', `brackets--${tone}`, className]} style={style} aria-hidden="true">
+  <span class="brackets__c brackets__c--tl"></span>
+  <span class="brackets__c brackets__c--tr"></span>
+  <span class="brackets__c brackets__c--bl"></span>
+  <span class="brackets__c brackets__c--br"></span>
+  {label && <span class="brackets__label">{label}</span>}
+</span>
+
+<style>
+  .brackets {
+    --br-w: 1.5px;
+    --br-color: var(--signal);
+    position: absolute;
+    inset: calc(var(--br-inset) * -1);
+    pointer-events: none;
+  }
+  .brackets--ink { --br-color: var(--ink); }
+
+  .brackets__c {
+    position: absolute;
+    width: var(--br-size);
+    height: var(--br-size);
+    border: 0 solid var(--br-color);
+  }
+  .brackets__c--tl { top: 0; left: 0; border-top-width: var(--br-w); border-left-width: var(--br-w); }
+  .brackets__c--tr { top: 0; right: 0; border-top-width: var(--br-w); border-right-width: var(--br-w); }
+  .brackets__c--bl { bottom: 0; left: 0; border-bottom-width: var(--br-w); border-left-width: var(--br-w); }
+  .brackets__c--br { bottom: 0; right: 0; border-bottom-width: var(--br-w); border-right-width: var(--br-w); }
+
+  .brackets__label {
+    position: absolute;
+    left: 0;
+    bottom: 100%;
+    margin-bottom: 4px;
+    padding: 1px 6px;
+    background: var(--bg);
+    border: 1px solid var(--br-color);
+    color: var(--signal-text);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-s);
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: .02em;
+    white-space: nowrap;
+  }
+  /* Small text never sits on --signal (contrast rule, 3.2): label is outlined, text uses --signal-text */
+  .brackets--ink .brackets__label { color: var(--ink); }
+</style>

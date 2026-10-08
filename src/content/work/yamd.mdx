@@ -1,0 +1,36 @@
+---
+title: yamd
+line: Coursework for the University of Freiburg course Molecular Dynamics in C++, built on the course's Meson template with Eigen and GoogleTest.
+discipline: Scientific computing · C++
+domain: [scientific]
+yearConfirmed: false
+status: coursework
+stack: [C++, Eigen, gtest, Meson]
+links:
+  repo: https://github.com/walidhemati/yamd
+description: yamd is coursework for the University of Freiburg course Molecular Dynamics in C++, built on the course's Meson template with Eigen and GoogleTest.
+todo:
+  - One sentence on what it simulates, plus one plot if available.
+  - Year, confirmed by Walid (the README says the summer 2024 course; keep hidden until he confirms).
+---
+import TLDR from '../../components/content/TLDR.astro';
+
+<TLDR
+  problem="Molecular dynamics is numerically simple to state and easy to get subtly wrong."
+  approach="Coursework built on the course's Meson template, with Eigen for the maths and GoogleTest for unit tests."
+  result="A unit-tested molecular dynamics code, written for a course at the University of Freiburg."
+/>
+
+## Overview
+
+Molecular dynamics moves atoms forward in time by computing the forces between them and integrating Newton's equations of motion, step after step. The equations fit on a napkin. The bugs hide in the details: a sign in a force, an off-by-one in a neighbour loop, a time step that quietly drifts the energy.
+
+yamd is my coursework for the University of Freiburg course Molecular Dynamics in C++. It started from the course's Meson template, which brought the build setup, Eigen and GoogleTest.
+
+## How it is built
+
+- **Eigen** for vectors and arrays, so the physics reads as linear algebra rather than index arithmetic.
+- **GoogleTest** for unit tests, so each piece of the integrator can be checked on its own.
+- **Meson** as the build system, from the course template.
+
+The source is on [GitHub](https://github.com/walidhemati/yamd).

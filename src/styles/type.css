@@ -1,0 +1,168 @@
+/* ==========================================================================
+   Typography (plan section 3.3)
+   Archivo carries everything; its width axis is the kinetic signature.
+   Instrument Serif Italic is an accent of 1–3 words. JetBrains Mono is metadata.
+   ========================================================================== */
+
+html {
+  font-family: var(--font-sans);
+  font-size: 100%;
+  font-stretch: 100%;
+  font-weight: 400;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-kerning: normal;
+}
+
+body {
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  letter-spacing: 0;
+  /* Archivo's word space is narrow; with negative tracking and pixel rounding
+     words visibly run together ("benchmarkfor"). Open it slightly site-wide. */
+  word-spacing: .04em;
+}
+
+p, li, dd, figcaption, blockquote {
+  text-wrap: pretty;
+}
+
+p { max-width: var(--measure); }
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-weight: 600;
+  text-wrap: balance;
+  color: var(--ink);
+}
+
+/* ---- Scale classes ---- */
+.t-mega {
+  font-family: var(--font-hero);
+  font-size: var(--fs-mega);
+  font-stretch: 72%;
+  font-weight: 700;
+  line-height: .85;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
+}
+
+.t-h1, h1 {
+  font-size: var(--fs-h1);
+  font-stretch: 72%;
+  font-weight: 700;
+  line-height: .9;
+  letter-spacing: -0.04em;
+  word-spacing: .06em;
+}
+
+.t-h2, h2 {
+  font-size: var(--fs-h2);
+  font-stretch: 85%;
+  font-weight: 600;
+  line-height: .95;
+  letter-spacing: -0.022em;
+  word-spacing: .06em;
+}
+
+.t-h3, h3 {
+  font-size: var(--fs-h3);
+  font-stretch: 100%;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.t-lead {
+  font-size: var(--fs-lead);
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  word-spacing: .05em;
+  max-width: 34ch;
+}
+
+.t-body { font-size: var(--fs-body); line-height: 1.55; }
+
+.t-small { font-size: .875rem; line-height: 1.5; }
+
+/* Mono metadata */
+.t-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The ONLY uppercase text on the site */
+.t-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono-s);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+}
+
+/* Serif italic accent: "on the device", "in production", "Freiburg" */
+.t-accent, em.accent {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-stretch: normal;
+  letter-spacing: -0.01em;
+}
+
+/* Inside giant headings the serif is optically smaller; nudge it up. */
+.t-mega .t-accent,
+h1 .t-accent,
+h2 .t-accent { font-size: 1.04em; letter-spacing: -0.02em; }
+
+.t-num, .tabular { font-variant-numeric: tabular-nums; }
+
+.c-ink-2 { color: var(--ink-2); }
+.c-ink-3 { color: var(--ink-3); }
+.c-signal { color: var(--signal-text); }
+
+/* ---- Links ---- */
+a {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .2em;
+  text-decoration-color: var(--rule-ui);
+  transition: text-decoration-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
+}
+a:hover { text-decoration-color: currentColor; }
+
+.prose a { color: var(--signal-text); text-decoration-color: currentColor; }
+
+/* ---- Prose (MDX bodies, legal pages) ---- */
+.prose {
+  max-width: var(--measure);
+}
+.prose > * + * { margin-top: 1em; }
+.prose h2 { font-size: var(--fs-h3); font-stretch: 100%; margin-top: 2.2em; letter-spacing: -0.015em; line-height: 1.1; }
+.prose h3 { font-size: 1.25rem; margin-top: 1.8em; }
+.prose ul, .prose ol { padding-left: 1.2em; }
+.prose li + li { margin-top: .35em; }
+.prose li::marker { color: var(--ink-3); }
+.prose code {
+  font-family: var(--font-mono);
+  font-size: .88em;
+  padding: .05em .3em;
+  background: var(--bg-raised);
+  border: 1px solid var(--rule);
+}
+.prose strong { font-weight: 600; }
+
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-fg);
+}

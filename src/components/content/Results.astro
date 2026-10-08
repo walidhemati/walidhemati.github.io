@@ -1,0 +1,110 @@
+---
+/**
+ * Results table (plan 5.4 #9). HONESTY: only metrics with `verified: true`
+ * render; unverified rows never reach the page. When no verified metric
+ * exists, only the slot (a qualitative, factual result) renders.
+ *
+ * MDX usage:  <Results metrics={frontmatter.metrics}>…what is verifiable…</Results>
+ */
+interface Metric {
+  label: string;
+  before?: string;
+  after?: string;
+  unit?: string;
+  source?: string;
+  verified?: boolean;
+}
+interface Props {
+  metrics?: Metric[];
+}
+const all = Astro.props.metrics ?? [];
+// Same rule as visibleMetrics() in src/lib/work.ts: strictly verified === true
+const rows = all.filter((m) => m.verified === true);
+// Single values (no baseline): Metric · Value · Source instead of Before/After/Change
+const compare = rows.some((m) => m.before);
+const fmt = (v?: string, unit?: string) => (v ? `${v}${unit ? ` ${unit}` : ''}` : '—');
+const num = (v?: string) => (v && /^-?\d+(\.\d+)?$/.test(v.trim()) ? Number(v) : null);
+const delta = (m: Metric) => {
+  const a = num(m.before);
+  const b = num(m.after);
+  if (a === null || b === null || a === 0) return '—';
+  const pct = ((b - a) / Math.abs(a)) * 100;
+  return `${pct > 0 ? '+' : ''}${pct.toFixed(0)}%`;
+};
+---
+
+<div class="results">
+  <div class="results__note"><slot /></div>
+  {
+    rows.length > 0 && (
+      <div class="results__scroll">
+        <table class="results__table">
+          <thead>
+            {compare ? (
+              <tr>
+                <th scope="col">Metric</th>
+                <th scope="col">Before</th>
+                <th scope="col">After</th>
+                <th scope="col">Change</th>
+              </tr>
+            ) : (
+              <tr>
+                <th scope="col">Metric</th>
+                <th scope="col">Value</th>
+                <th scope="col">Source</th>
+              </tr>
+            )}
+          </thead>
+          <tbody>
+            {rows.map((m) =>
+              compare ? (
+                <tr>
+                  <th scope="row">{m.label}</th>
+                  <td>{fmt(m.before, m.unit)}</td>
+                  <td class="results__after">{fmt(m.after, m.unit)}</td>
+                  <td>{delta(m)}</td>
+                </tr>
+              ) : (
+                <tr>
+                  <th scope="row">{m.label}</th>
+                  <td class="results__after">{fmt(m.after, m.unit)}</td>
+                  <td class="results__src">{m.source ?? '—'}</td>
+                </tr>
+              ),
+            )}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .results { display: grid; gap: var(--sp-5); }
+  .results__note :global(p) { margin: 0; }
+  .results__note :global(p + p) { margin-top: 1em; }
+  .results__scroll { overflow-x: auto; }
+  .results__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .results__table th,
+  .results__table td {
+    text-align: left;
+    padding: var(--sp-3) var(--sp-3) var(--sp-3) 0;
+    border-bottom: 1px solid var(--rule);
+    font-weight: 400;
+  }
+  .results__table thead th {
+    font-size: var(--fs-mono-s);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    border-bottom-color: var(--rule-strong);
+  }
+  .results__after { color: var(--ink); font-weight: 500; white-space: nowrap; }
+  .results__src { color: var(--ink-2); }
+</style>

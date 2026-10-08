@@ -1,0 +1,51 @@
+---
+title: Turkish review classification
+line: Classifying Turkish Hepsiburada reviews, comparing logistic regression and SVM with BERTurk and DistilBERT.
+discipline: NLP
+domain: [nlp, ml-cv]
+yearConfirmed: false
+status: open-source
+stack: [Python, Jupyter, BERT]
+links:
+  repo: https://github.com/walidhemati/Hepsiburada-review-classification-NLP
+description: Turkish review classification on Hepsiburada reviews, comparing logistic regression and SVM with BERTurk and DistilBERT.
+todo:
+  - Accuracy or F1 per model from the notebooks, then add them as verified metrics (the Results block renders them).
+  - Year, confirmed by Walid.
+  - Add a README to the repo.
+---
+import TLDR from '../../components/content/TLDR.astro';
+import Results from '../../components/content/Results.astro';
+import FlowDiagram from '../../components/content/FlowDiagram.astro';
+
+<TLDR
+  problem="Most NLP tooling is built for English. Turkish is agglutinative: one word can carry what English spreads across a sentence."
+  approach="Classify product reviews from Hepsiburada, a Turkish online marketplace, with classical baselines and with Turkish transformer models."
+  result="A like-for-like comparison of logistic regression and SVM against BERTurk and DistilBERT, in Jupyter notebooks."
+/>
+
+## The question
+
+When does a pretrained transformer earn its cost? On English text the answer is usually "almost always". On Turkish, where suffixes stack onto a stem and a vocabulary built for English splits words badly, it is worth measuring instead of assuming.
+
+## Approach
+
+<FlowDiagram
+  fig="FIG. 01"
+  caption="The same reviews go through two families of models. Classical baselines set the bar the transformers have to clear."
+  steps={[
+    { label: 'Reviews', sub: 'Hepsiburada\nTurkish text' },
+    { label: 'Baselines', sub: 'LogReg · SVM' },
+    { label: 'Transformers', sub: 'BERTurk ·\nDistilBERT' },
+    { label: 'Compare', sub: 'same\nreviews' },
+  ]}
+/>
+
+- **Classical baselines:** logistic regression and a support vector machine.
+- **Transformers:** BERT-base-turkish (BERTurk) and DistilBERT, on the same classification task.
+
+## Results
+
+<Results metrics={frontmatter.metrics}>
+  The notebooks are on [GitHub](https://github.com/walidhemati/Hepsiburada-review-classification-NLP). The scores per model will be listed here once they are taken from the notebooks.
+</Results>

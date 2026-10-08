@@ -1,0 +1,38 @@
+---
+/**
+ * Case-study pages (plan 5.4). Featured (N.xx) and "also" entries get a page;
+ * archive rows are list-only. needsSignoff entries render ONLY their fallback
+ * line (CaseStudy drops the body and the plate).
+ */
+import { render } from 'astro:content';
+import CaseStudy from '../../layouts/CaseStudy.astro';
+import CavityPlate from '../../components/content/plates/CavityPlate.astro';
+import ReceiptPlate from '../../components/content/plates/ReceiptPlate.astro';
+import ScanPlate from '../../components/content/plates/ScanPlate.astro';
+import EegPlate from '../../components/content/plates/EegPlate.astro';
+import { getWork } from '../../lib/work';
+
+export async function getStaticPaths() {
+  const { pages, featured } = await getWork();
+  return pages.map((entry, i) => ({
+    params: { slug: entry.id },
+    props: { entry, next: pages[(i + 1) % pages.length], total: featured.length },
+  }));
+}
+
+const { entry, next, total } = Astro.props;
+const { Content, headings } = await render(entry);
+
+const PLATES: Record<string, typeof CavityPlate> = {
+  pylbm: CavityPlate,
+  steuerapp: ReceiptPlate,
+  flatsnap: ScanPlate,
+  'eeg-emotion-vae': EegPlate,
+};
+const Plate = PLATES[entry.id];
+---
+
+<CaseStudy entry={entry} next={next} total={total} headings={headings}>
+  {Plate && <Plate slot="plate" />}
+  {!entry.data.needsSignoff && <Content />}
+</CaseStudy>

@@ -1,0 +1,86 @@
+---
+n: 3
+title: SteuerApp
+line: An offline German tax recorder for Android. Receipts are read and classified on the device; by default nothing leaves the phone.
+discipline: Android · Privacy-first
+domain: [android]
+yearConfirmed: false
+status: in-development
+stack: [Kotlin, Android, On-device OCR, Room + SQLCipher]
+links:
+  repo: https://github.com/walidhemati/SteuerApp
+featured: true
+description: SteuerApp is an offline German tax recorder for Android with on-device receipt OCR, offline tax rules and a PDF export mapped to ELSTER fields. In development.
+todo:
+  - Stays "In development" unless Walid confirms a Google Play listing and URL.
+  - 3–5 screenshots (scroll-snap rail, plan 5.4).
+  - Start year, confirmed by Walid.
+  - Review the "Decisions" wording against his actual reasons.
+  - Privacy wording follows the README/manifest (INTERNET permission, optional AI check off by default, user's own API key, sends extracted text only). Re-check if that feature changes.
+---
+import TLDR from '../../components/content/TLDR.astro';
+import Decision from '../../components/content/Decision.astro';
+import Results from '../../components/content/Results.astro';
+import FlowDiagram from '../../components/content/FlowDiagram.astro';
+
+<TLDR
+  problem="A German tax return needs a year of receipts, and receipts are personal: what you earn, where you live, who fixed your heating."
+  approach="Read receipts with on-device OCR, apply the tax rules offline, and export a PDF laid out along the ELSTER form fields."
+  result="A tax recorder that works fully offline by default. In development."
+/>
+
+## Problem
+
+<p class="lede">Tax paperwork is a year-long chore that ends in one stressful week.</p>
+
+The receipts that matter for a German tax return arrive all year: invoices from tradespeople, bills for household services. By filing season they are scattered across drawers, inboxes and photo rolls, and the rules that decide what counts are spread across the Income Tax Act and the Fiscal Code.
+
+The data involved is also some of the most private there is. SteuerApp starts from a simple position: none of it needs to leave the phone, and by default none of it does.
+
+## Constraints
+
+- **Offline by default.** OCR and tax classification run on the device without network access. An optional AI check, off by default and using the user's own API key, sends only the extracted receipt text, never images.
+- **Encrypted at rest.** Records live in a local Room database encrypted with SQLCipher.
+- **Works offline.** Recording a receipt cannot depend on a connection.
+- **German tax law, as written.** The rules come from the statutes: the income tax tariff in §32a EStG, the reduction for household services and tradespeople in §35a EStG, and the filing deadlines of the Abgabenordnung (AO).
+- **The output has to be usable.** The PDF follows the fields of ELSTER, the tax authority's filing portal, so the numbers can be carried over directly.
+
+## Approach
+
+The app is written in Kotlin for Android. A receipt goes through four steps, and by default every one of them runs on the phone.
+
+<FlowDiagram
+  fig="FIG. 02"
+  caption="The data path. Capture, recognition, rules and export all run inside the app by default."
+  boundary="On the device"
+  steps={[
+    { label: 'Capture', sub: 'photo of\nthe receipt' },
+    { label: 'Read', sub: 'on-device\nOCR' },
+    { label: 'Apply rules', sub: '§32a · §35a ·\nAO deadlines' },
+    { label: 'Export', sub: 'PDF mapped to\nELSTER fields' },
+  ]}
+/>
+
+## Decisions
+
+<div class="decisions">
+  <Decision chose="On-device OCR" over="a cloud OCR service">
+    Receipt images never leave the phone, and recognition keeps working without a connection. The privacy promise is a property of the architecture, not a line in a policy.
+  </Decision>
+  <Decision chose="Rules shipped in the app" over="rules fetched from a server">
+    The rules work fully offline. The trade-off is explicit: when the law changes, the rules change with an app update.
+  </Decision>
+  <Decision chose="A PDF mapped to ELSTER" over="filing from inside the app">
+    The app prepares the numbers; filing stays with the user, in ELSTER. That keeps filing, and the user's ELSTER credentials, outside the app.
+  </Decision>
+</div>
+
+## Status
+
+<Results metrics={frontmatter.metrics}>
+  SteuerApp is in development. The [source](https://github.com/walidhemati/SteuerApp) is on GitHub, with a detailed README in German.
+</Results>
+
+## What I'd do next
+
+- Put it in people's hands: screenshots here, then a store release.

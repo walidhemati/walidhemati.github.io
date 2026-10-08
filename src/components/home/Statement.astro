@@ -1,0 +1,59 @@
+---
+/**
+ * Inverted statement (plan 4.4 #11). Not pinned.
+ * Words fill from --invert-ink-3 (≥5:1) to full --invert-fg as you scroll:
+ * statement.ts splits words (SplitText on an aria-hidden copy; sr-only text for AT) and scrubs a --fill custom
+ * property per word. Reduced motion / no JS: fully inked, not split.
+ */
+---
+
+<section class="statement invert" aria-label="Statement">
+  <div class="wrap statement__wrap grid">
+    <p class="t-label statement__label col-label" aria-hidden="true">⌜ Statement</p>
+    <p class="statement__text">
+      <span class="sr-only">I build models that watch video for a living, and Android apps that keep your data on the device.</span>
+      <span class="statement__vis" data-fill aria-hidden="true">
+        I build models that watch video for a living, and Android apps that keep your data <em class="t-accent">on the device</em>.
+      </span>
+    </p>
+  </div>
+</section>
+
+<style>
+  .statement {
+    padding-block: clamp(var(--sp-9), 18vh, var(--sp-11));
+    position: relative;
+  }
+  @media (min-width: 1024px) {
+    .statement { padding-block: var(--sp-11); }
+  }
+  .statement__wrap { row-gap: var(--sp-6); }
+  .statement__label { padding-top: .6em; }
+  .statement__text {
+    grid-column: 1 / -1;
+    max-width: 16ch;
+    font-size: clamp(2.75rem, .5rem + 8vw, 9.5rem);
+    font-weight: 600;
+    font-stretch: 80%;
+    line-height: .96;
+    letter-spacing: -0.025em;
+    word-spacing: .07em;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+  @media (max-width: 639px) {
+    .statement__text { font-size: 11vw; }
+  }
+  @media (min-width: 640px) {
+    .statement__text { grid-column: 2 / -1; }
+  }
+  @media (min-width: 1024px) {
+    .statement__text { grid-column: 2 / -1; }
+  }
+  .statement__vis { display: block; }
+  .statement__text :global(.t-accent) { font-size: 1.06em; letter-spacing: -0.02em; }
+  /* Word fill: colour mixes from ink-3 to ink by --fill (0 → 1), set per word by GSAP */
+  .statement__text :global(.fill-w) {
+    color: color-mix(in srgb, var(--ink) calc(var(--fill, 1) * 100%), var(--ink-3));
+  }
+</style>

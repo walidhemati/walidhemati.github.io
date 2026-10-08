@@ -1,0 +1,243 @@
+---
+/**
+ * Home hero (plan 5.3, 4.4 #2–#4, #14).
+ *  - WALID / HEMATI at --fs-mega: the LCP element, painted at frame 1, never at
+ *    opacity 0. The wdth 100 → 72 settle runs only under html.hero-settle (set by
+ *    the inline prefs script when the hero font is ready within ~100ms).
+ *  - Status pill + lead + CTAs (View work, CV, Copy email).
+ *  - Detection pass: one bracket box hops across the <span data-detect> targets
+ *    (cv → android → loc) and rests on the status pill. The box is aria-hidden;
+ *    with no JS or reduced motion the pill simply carries static brackets.
+ */
+import Brackets from '../Brackets.astro';
+import Icon from '../Icon.astro';
+import { AVAILABILITY, AVAILABILITY_SHORT, CV_HREF, CV_PDF, EMAIL, NAME_LINES } from '../../site.config';
+
+const cvIsPdf = Boolean(CV_PDF);
+---
+
+<section class="hero dot-grid" data-hero aria-labelledby="hero-name">
+  <div class="hero__wrap wrap">
+    <span class="hero__crop hero__crop--tl" aria-hidden="true"></span>
+    <span class="hero__crop hero__crop--tr" aria-hidden="true"></span>
+
+    <div class="hero__top">
+      <p class="t-label hero__role">
+        <span class="sr-only">ML &amp; software engineer</span>
+        <span class="split-host" data-split-lines aria-hidden="true">ML &amp; software engineer</span>
+      </p>
+      <p class="t-label hero__fields" aria-hidden="true">Computer vision · Android · Scientific computing</p>
+    </div>
+
+    <h1 id="hero-name" class="t-mega hero__name">
+      <span class="hero__line">{NAME_LINES[0]}</span>
+      <span class="hero__line hero__line--2">{NAME_LINES[1]}</span>
+    </h1>
+
+    <div class="grid hero__meta">
+      <div class="hero__status">
+        <p class="t-label hero__status-label">
+          <span class="sr-only">Status</span>
+          <!-- live detector readout: hero.ts writes "Detect · cv" … "Detect · status" here -->
+          <span aria-hidden="true" data-detect-label>[ Status ]</span>
+        </p>
+        <p class="hero__pill" data-detect="status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span aria-hidden="true">{AVAILABILITY_SHORT}</span>
+          <span class="sr-only">{AVAILABILITY}</span>
+          <Brackets size="7px" inset="7px" class="hero__pill-brackets" />
+        </p>
+      </div>
+
+      <div class="hero__copy">
+        <p class="t-lead hero__lead">
+          <!-- SplitText runs with aria:'none' on the aria-hidden copy; screen readers get this one -->
+          <span class="sr-only">Computer vision on broadcast and streamed video at Shikenso, Android apps that keep your data on the device, and scientific computing in Python and C++. Based in Freiburg.</span>
+          <!-- kept on ONE source line: SplitText drops newline-only whitespace before nested elements -->
+          <span class="split-host" data-split-lines aria-hidden="true"><span data-detect="cv">Computer vision</span> on broadcast and streamed video at Shikenso, <span data-detect="android">Android</span> apps that keep your data <em class="t-accent">on the device</em>, and scientific computing in Python and C++. Based in <span data-detect="loc">Freiburg</span>.</span>
+        </p>
+
+        <div class="cluster hero__ctas">
+          <a class="btn btn--solid" href="/work/">View work <Icon name="arrow-right" /></a>
+          <a class="btn" href={CV_HREF} download={cvIsPdf ? '' : undefined}>
+            {cvIsPdf ? 'Download CV' : 'CV'}
+            <Icon name={cvIsPdf ? 'arrow-down' : 'arrow-right'} />
+          </a>
+          <button type="button" class="btn" data-js-only data-copy={EMAIL} data-copy-fallback={`mailto:${EMAIL}`}>
+            <span>Copy email</span>
+            <Icon name="copy" />
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <span class="hero__crop hero__crop--bl" aria-hidden="true"></span>
+    <span class="hero__crop hero__crop--br" aria-hidden="true"></span>
+
+    <button type="button" class="hero__replay" data-detect-replay hidden>
+      <Icon name="replay" size={14} />
+      <span>Replay</span>
+    </button>
+  </div>
+
+  <!-- Detection box: four corners, moved with transforms only. The readout lives in the status label. -->
+  <div class="detect" aria-hidden="true" data-detect-box>
+    <span class="detect__c detect__c--tl"></span>
+    <span class="detect__c detect__c--tr"></span>
+    <span class="detect__c detect__c--bl"></span>
+    <span class="detect__c detect__c--br"></span>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    padding-block: var(--sp-6) var(--sp-8);
+    overflow: clip;
+  }
+  .hero__wrap { position: relative; padding-block: var(--sp-5) var(--sp-6); }
+
+  /* Crop marks ⌜ ⌝ ⌞ ⌟ in the hero corners (3.5 #3) */
+  .hero__crop {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 0 solid var(--ink);
+  }
+  .hero__crop--tl { top: 0; left: calc(var(--margin) - 8px); border-top-width: 1px; border-left-width: 1px; }
+  .hero__crop--tr { top: 0; right: calc(var(--margin) - 8px); border-top-width: 1px; border-right-width: 1px; }
+  .hero__crop--bl { bottom: 0; left: calc(var(--margin) - 8px); border-bottom-width: 1px; border-left-width: 1px; }
+  .hero__crop--br { bottom: 0; right: calc(var(--margin) - 8px); border-bottom-width: 1px; border-right-width: 1px; }
+
+  .hero__top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--sp-2) var(--sp-5);
+    margin-bottom: var(--sp-7);
+  }
+  .hero__fields { display: none; }
+  @media (min-width: 640px) { .hero__fields { display: block; } }
+
+  /* ---- Name: the LCP element ---- */
+  .hero__name {
+    display: flex;
+    flex-direction: column;
+    margin: 0 0 var(--sp-8);
+    color: var(--ink);
+  }
+  .hero__line {
+    display: block;
+    white-space: nowrap;
+    contain: inline-size;
+    /* the block width is set by the column, never by the glyphs, so the wdth
+       settle cannot resize the box (4.4 #2) */
+    width: 100%;
+  }
+  /* Top-left → bottom-right diagonal: HEMATI ends flush on the right crop mark.
+     It is LEFT-anchored with a computed indent (100% minus the word's width at
+     wdth 72, measured: 2.74em), not text-align:right, so the wdth settle only
+     moves the right edge and the glyphs never shift (CLS). Re-measure if
+     NAME_LINES changes. */
+  .hero__line--2 { --name2-w: 2.745em; padding-left: max(.2em, calc(100% - var(--name2-w))); }
+  @media (max-width: 639px) {
+    .hero__name { font-size: 28vw; }
+  }
+
+  /* ---- Meta grid: status (cols 1–3) · lead + CTAs (cols 4–10) ---- */
+  .hero__meta { row-gap: var(--sp-6); align-items: start; }
+  .hero__status { grid-column: 1 / -1; }
+  .hero__copy { grid-column: 1 / -1; }
+  @media (min-width: 640px) {
+    .hero__status { grid-column: 1 / span 2; }
+    .hero__copy { grid-column: 3 / -1; }
+  }
+  @media (min-width: 1024px) {
+    .hero__status { grid-column: 1 / span 3; }
+    .hero__copy { grid-column: 4 / span 7; }
+  }
+  .hero__status-label { margin-bottom: var(--sp-3); }
+  .hero__status-label [data-detect-label] { display: inline-block; min-width: 18ch; }
+  :global(.hero.is-detect-live) .hero__status-label [data-detect-label] { color: var(--signal-text); }
+  :global(.hero.is-detect-live) .hero__status-label :global(.detect-key) { text-transform: none; letter-spacing: .02em; }
+
+  .hero__pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    max-width: 100%;
+    white-space: nowrap;
+    padding: 6px 12px;
+    border: 1px solid var(--rule-ui);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-s);
+    font-weight: 500;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    line-height: 1.35;
+  }
+  /* Static detection brackets: shown with no JS / reduced motion; hidden while the live box runs */
+  :global(.hero__pill-brackets) { transition: opacity var(--dur-2) linear; }
+  @media (prefers-reduced-motion: no-preference) {
+    :global(:root.js-motion:not([data-motion='reduce'])) :global(.hero__pill-brackets) { opacity: 0; }
+  }
+
+  .split-host { display: block; }
+  .hero__pill :global(.brackets__label) { text-transform: none; letter-spacing: .02em; }
+  .hero__lead { max-width: 30ch; }
+  @media (min-width: 1024px) { .hero__lead { max-width: 32ch; } }
+  .hero__lead [data-detect] {
+    white-space: nowrap;
+    transition: color var(--dur-2) var(--ease-out);
+  }
+  .hero__lead [data-detect].is-detected { color: var(--signal-text); }
+
+  .hero__ctas { margin-top: var(--sp-6); --cluster: var(--sp-3); }
+
+  .hero__replay {
+    position: absolute;
+    right: var(--margin);
+    bottom: var(--sp-4);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding-inline: var(--sp-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-s);
+    font-weight: 500;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .hero__replay:hover { color: var(--ink); }
+  .hero__replay :global(svg) { transition: transform var(--dur-3) var(--ease-out); }
+  .hero__replay:hover :global(svg) { transform: rotate(-200deg); }
+
+  /* ---- Live detection box (moved by hero.ts with transforms only) ---- */
+  .detect {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: none;
+    z-index: 2;
+  }
+  .hero.is-detect-live .detect { display: block; }
+  .detect__c {
+    --c: 12px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--c);
+    height: var(--c);
+    border: 0 solid var(--signal);
+    opacity: 0;
+    will-change: transform;
+  }
+  .detect__c--tl { border-top-width: 1.5px; border-left-width: 1.5px; }
+  .detect__c--tr { border-top-width: 1.5px; border-right-width: 1.5px; }
+  .detect__c--bl { border-bottom-width: 1.5px; border-left-width: 1.5px; }
+  .detect__c--br { border-bottom-width: 1.5px; border-right-width: 1.5px; }
+</style>

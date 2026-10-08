@@ -1,0 +1,408 @@
+---
+/**
+ * [01] The site's one pinned section (plan 4.4 #10, wireframe 5.3).
+ *
+ * Shikenso pipeline is gated on manager sign-off, so this ships the pylbm
+ * FALLBACK: Grid → Collide → Stream → Validate, worded from the pylbm README
+ * facts in the audit (GPU PyTorch/CUDA, D2Q9, lid-driven cavity, validated
+ * against Ghia et al. 1982). No unverified numbers appear here.
+ *
+ *  - All four step texts are always in the DOM and visible; JS only moves the
+ *    emphasis (Ctrl+F and screen readers get the whole sequence).
+ *  - Default (no JS, reduced motion, < 1024px): static stacked figures with
+ *    captions. pipeline.ts adds .is-pinned on desktop when motion is allowed.
+ *  - The figure is a schematic drawn for this page, captioned as such.
+ */
+import Icon from '../Icon.astro';
+import SectionHead from './SectionHead.astro';
+
+const f = (n: number) => +n.toFixed(1);
+
+/** Arrow as plain paths (no <marker>: duplicate ids break inside display:none). */
+function arrow(x1: number, y1: number, x2: number, y2: number, head = 6, cls = '') {
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  const h1 = [x2 - head * Math.cos(a - 0.45), y2 - head * Math.sin(a - 0.45)];
+  const h2 = [x2 - head * Math.cos(a + 0.45), y2 - head * Math.sin(a + 0.45)];
+  return `<path class="${cls}" d="M${f(x1)} ${f(y1)}L${f(x2)} ${f(y2)}M${f(h1[0])} ${f(h1[1])}L${f(x2)} ${f(y2)}L${f(h2[0])} ${f(h2[1])}"/>`;
+}
+
+const DIRS = [
+  [1, 0], [0, -1], [-1, 0], [0, 1],
+  [1, -1], [-1, -1], [-1, 1], [1, 1],
+];
+
+/* ---------------- Cavity (main figure) ---------------- */
+const X0 = 20, Y0 = 40, S = 360, N = 12, STEP = S / N;
+const node = (i: number) => X0 + STEP / 2 + i * STEP;
+
+let gridLines = '';
+for (let i = 1; i < N; i++) {
+  gridLines += `<path d="M${X0 + i * STEP} ${Y0}V${Y0 + S}M${X0} ${Y0 + i * STEP}H${X0 + S}"/>`;
+}
+let nodes = '';
+for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) nodes += `<circle cx="${node(i)}" cy="${node(j) + Y0 - X0}" r="1.6"/>`;
+
+const CI = 7, CJ = 4;
+const cx = node(CI), cy = node(CJ) + Y0 - X0;
+const collide = DIRS.map(([dx, dy]) => arrow(cx, cy, cx + dx * STEP * 0.62, cy + dy * STEP * 0.62, 4)).join('');
+const stream = DIRS.map(([dx, dy]) => arrow(cx + dx * 6, cy + dy * 6, cx + dx * (STEP - 3), cy + dy * (STEP - 3), 4)).join('');
+const neighbours = DIRS.map(([dx, dy]) => `<circle cx="${cx + dx * STEP}" cy="${cy + dy * STEP}" r="3"/>`).join('');
+
+// Primary vortex, skewed toward the moving lid
+const vcx = X0 + S * 0.56, vcy = Y0 + S * 0.38;
+let flow = '';
+for (let k = 1; k <= 8; k++) {
+  const rx = 19 * k, ry = 18 * k;
+  let d = '';
+  for (let i = 0; i <= 80; i++) {
+    const a = (i / 80) * Math.PI * 2;
+    const wob = 1 + 0.06 * Math.sin(a * 2 + k * 0.5);
+    let x = vcx + Math.cos(a) * rx * wob - k * 2.2;
+    let y = vcy + Math.sin(a) * ry * wob + k * 3.4;
+    x = Math.max(X0 + 6, Math.min(X0 + S - 6, x));
+    y = Math.max(Y0 + 6, Math.min(Y0 + S - 6, y));
+    d += `${i ? 'L' : 'M'}${f(x)} ${f(y)}`;
+  }
+  flow += `<path d="${d}Z" style="opacity:${(0.3 + k * 0.08).toFixed(2)}"/>`;
+}
+// corner eddies
+flow += `<path d="M${X0 + 8} ${Y0 + S - 8}q14 -4 20 -24q-18 2 -20 24"/><path d="M${X0 + S - 8} ${Y0 + S - 8}q-18 -6 -24 -28q22 4 24 28"/>`;
+
+/* ---------------- Detail panels (240 × 240) ---------------- */
+const D = [40, 120, 200];
+let dGrid = '<g class="pf-thin">';
+for (const v of D) dGrid += `<path d="M${v} 0V240M0 ${v}H240"/>`;
+dGrid += '</g><g class="pf-ink">';
+for (const x of D) for (const y of D) if (!(x === 120 && y === 120)) dGrid += `<circle cx="${x}" cy="${y}" r="4"/>`;
+dGrid += '</g><circle class="pf-signal-fill" cx="120" cy="120" r="6"/><text class="pf-mono" x="130" y="112">node</text>';
+
+let dCollide = '<circle class="pf-ring" cx="120" cy="120" r="26"/><g class="pf-ink-stroke">';
+DIRS.forEach(([dx, dy], i) => {
+  const L = dx && dy ? 62 : 82;
+  const k = dx && dy ? 0.7071 : 1;
+  dCollide += arrow(120, 120, 120 + dx * L * k * (dx && dy ? 1.25 : 1), 120 + dy * L * k * (dx && dy ? 1.25 : 1), 7);
+  const tx = 120 + dx * (dx && dy ? 74 : 98);
+  const ty = 120 + dy * (dx && dy ? 74 : 98);
+  dCollide += `<text class="pf-mono" x="${f(tx)}" y="${f(ty + 4)}" text-anchor="middle">f${i + 1}</text>`;
+});
+dCollide += '</g><circle class="pf-signal-fill" cx="120" cy="120" r="5"/><text class="pf-mono" x="132" y="140">f0</text>';
+
+let dStream = '<g class="pf-thin">';
+for (const v of D) dStream += `<path d="M${v} 0V240M0 ${v}H240"/>`;
+dStream += '</g><g class="pf-signal-stroke">';
+DIRS.forEach(([dx, dy]) => (dStream += arrow(120 + dx * 10, 120 + dy * 10, 120 + dx * 72, 120 + dy * 72, 8)));
+dStream += '</g><g class="pf-ink">';
+for (const x of D) for (const y of D) if (!(x === 120 && y === 120)) dStream += `<circle cx="${x}" cy="${y}" r="4"/>`;
+dStream += '</g><circle class="pf-hollow" cx="120" cy="120" r="5"/>';
+
+// Validate: generic centreline profile (schematic, not data)
+const prof: [number, number][] = [];
+for (let i = 0; i <= 40; i++) {
+  const y = i / 40; // 0 bottom → 1 lid
+  const u = Math.pow(y, 3.2) * 1.0 - 0.32 * Math.sin(Math.PI * y) * (1 - y * 0.4);
+  prof.push([u, y]);
+}
+const px = (u: number) => 70 + u * 150;
+const py = (y: number) => 220 - y * 200;
+const profD = prof.map(([u, y], i) => `${i ? 'L' : 'M'}${f(px(u))} ${f(py(y))}`).join('');
+const refs = [2, 6, 10, 14, 18, 22, 26, 30, 34, 38].map((i) => {
+  const [u, y] = prof[i];
+  return `<circle cx="${f(px(u) + ((i % 3) - 1) * 1.5)}" cy="${f(py(y))}" r="3.5"/>`;
+});
+const dValidate =
+  `<g class="pf-thin"><path d="M20 220H230M70 15V228"/><path d="M${px(1)} 216v8"/></g>` +
+  `<text class="pf-mono" x="226" y="236" text-anchor="end">u</text><text class="pf-mono" x="56" y="22" text-anchor="end">y</text>` +
+  `<path class="pf-signal-stroke pf-wide" d="${profD}"/>` +
+  `<g class="pf-hollow">${refs.join('')}</g>` +
+  `<g class="pf-legend"><circle class="pf-hollow" cx="98" cy="232" r="3.5"/><text class="pf-mono" x="106" y="235">reference</text></g>`;
+
+const steps = [
+  {
+    name: 'Grid',
+    text: 'The square cavity becomes a D2Q9 lattice. Every node stores nine particle distributions, one per lattice direction, and the whole grid lives on the GPU with PyTorch and CUDA.',
+    detail: dGrid,
+    tag: 'lattice',
+  },
+  {
+    name: 'Collide',
+    text: 'At every node the nine distributions relax toward a local equilibrium. All nodes do this at once, in parallel on the GPU.',
+    detail: dCollide,
+    tag: 'd2q9 stencil',
+  },
+  {
+    name: 'Stream',
+    text: 'The distributions move on to the neighbouring nodes along their directions. The moving lid keeps feeding momentum in, and the cavity vortex forms.',
+    detail: dStream,
+    tag: 'streaming',
+  },
+  {
+    name: 'Validate',
+    text: 'Velocities along the cavity centrelines are checked against the reference data of Ghia et al. (1982), the standard benchmark for this flow.',
+    detail: dValidate,
+    tag: 'centreline',
+  },
+];
+---
+
+<section class="pipe section" data-pipe aria-labelledby="pipe-h">
+  <div class="wrap">
+    <SectionHead n="01" label="Scientific computing" id="pipe-h">
+      A cavity flow on the <em class="t-accent">GPU</em>, in four steps.
+      <p slot="intro">
+        pylbm is a Lattice-Boltzmann solver in PyTorch and CUDA for the lid-driven cavity. This is how one run works.
+      </p>
+    </SectionHead>
+  </div>
+
+  <div class="pipe__stage wrap" data-pipe-stage>
+    <div class="pipe__grid">
+      <ol class="pipe__steps list-reset" role="list">
+        {
+          steps.map((s, i) => (
+            <li class:list={['pipe__step', { 'is-active': i === 0 }]} data-pipe-step={i}>
+              <p class="t-label pipe__n">
+                <span class="tabular">{i + 1}/4</span>
+              </p>
+              <h3 class="pipe__name">{s.name}</h3>
+              <p class="pipe__text">{s.text}</p>
+              <svg class="pipe__mini" viewBox="0 0 240 240" aria-hidden="true" focusable="false" set:html={s.detail} />
+            </li>
+          ))
+        }
+      </ol>
+
+      <figure class="pf" data-step="all" data-pipe-fig>
+        <div class="pf__head t-label" aria-hidden="true">
+          <span>FIG. 01 · pylbm · D2Q9 lid-driven cavity</span>
+          <span class="pf__count tabular"><span data-pipe-count>1</span>/4</span>
+        </div>
+        <div class="pf__body">
+          <svg class="pf__cavity" viewBox="0 0 400 420" aria-hidden="true" focusable="false">
+            <g class="pf-grid" set:html={gridLines} />
+            <g class="pf-nodes" set:html={nodes} />
+            <rect class="pf-frame" x={X0} y={Y0} width={S} height={S} />
+            <path class="pf-lid" d={`M${X0} ${Y0}H${X0 + S}`} />
+            <g class="pf-signal-stroke" set:html={arrow(X0 + S - 110, Y0 - 16, X0 + S - 40, Y0 - 16, 7)} />
+            <text class="pf-mono" x={X0} y={Y0 - 12}>moving lid</text>
+
+            <g class="pf-l pf-l--flow pf-flow" set:html={flow} />
+            <g class="pf-l pf-l--cell">
+              <rect class="pf-cellbox" x={cx - STEP / 2} y={cy - STEP / 2} width={STEP} height={STEP} />
+              <g class="pf-ink-stroke pf-l--collide" set:html={collide} />
+            </g>
+            <g class="pf-l pf-l--stream">
+              <g class="pf-signal-stroke" set:html={stream} />
+              <g class="pf-ink" set:html={neighbours} />
+            </g>
+            <g class="pf-l pf-l--centre">
+              <path class="pf-centreline" d={`M${X0 + S / 2} ${Y0}V${Y0 + S}`} />
+              <text class="pf-mono pf-mono--signal" x={X0 + S / 2 + 6} y={Y0 + S - 8}>x = ½</text>
+            </g>
+          </svg>
+
+          <div class="pf__detail" aria-hidden="true">
+            {
+              steps.map((s, i) => (
+                <div class="pf__panel" data-panel={i}>
+                  <span class="t-label pf__tag">{`detail · ${s.tag}`}</span>
+                  <svg viewBox="0 0 240 240" focusable="false" set:html={s.detail} />
+                </div>
+              ))
+            }
+          </div>
+        </div>
+        <div class="pf__progress" aria-hidden="true"><span data-pipe-progress></span></div>
+        <figcaption class="pf__caption t-mono c-ink-3">
+          Schematic of the method, drawn for this page. Not simulation output.
+        </figcaption>
+      </figure>
+    </div>
+
+    <p class="pipe__links cluster">
+      <a class="btn" href="/work/pylbm/">pylbm case study <Icon name="arrow-right" /></a>
+      <a class="btn" href="https://github.com/walidhemati/pylbm" rel="noopener">Repo <Icon name="arrow-up-right" /></a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .pipe { padding-bottom: var(--sp-8); }
+  /* ---------- Static layout (default, mobile, reduced motion, no JS) ---------- */
+  .pipe__grid { display: grid; gap: var(--sp-7); }
+  .pf { order: -1; }
+  .pipe__steps { display: grid; gap: var(--sp-6); counter-reset: s; }
+  @media (min-width: 640px) {
+    .pipe__steps { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-7) var(--gutter); }
+  }
+  .pipe__step {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 96px;
+    grid-template-areas: 'n mini' 'name mini' 'text text';
+    column-gap: var(--sp-4);
+    padding-top: var(--sp-3);
+    border-top: 1px solid var(--rule);
+  }
+  .pipe__n { grid-area: n; }
+  .pipe__name { grid-area: name; font-size: var(--fs-h3); font-stretch: 85%; margin-top: var(--sp-2); }
+  .pipe__text { grid-area: text; margin-top: var(--sp-3); color: var(--ink-2); max-width: 42ch; }
+  .pipe__mini { grid-area: mini; width: 96px; height: 96px; align-self: start; }
+
+  .pf__head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    padding-bottom: var(--sp-3);
+    border-bottom: 1px solid var(--rule);
+  }
+  .pf__count { display: none; }
+  .pf__body {
+    display: grid;
+    gap: var(--gutter);
+    padding-block: var(--sp-4);
+    background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .pf__cavity { width: 100%; max-width: 520px; height: auto; margin-inline: auto; }
+  .pf__detail { display: none; }
+  .pf__progress { display: none; }
+  .pf__caption { padding-top: var(--sp-3); border-top: 1px solid var(--rule); font-size: var(--fs-mono-s); }
+
+  .pipe__links { margin-top: var(--sp-7); --cluster: var(--sp-3); }
+
+  /* ---------- SVG paint (tokens, so both themes work) ---------- */
+  .pipe :global(.pf-grid path) { stroke: var(--rule); stroke-width: 1; fill: none; }
+  .pipe :global(.pf-nodes circle) { fill: var(--ink-3); }
+  .pipe :global(.pf-frame) { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+  .pipe :global(.pf-lid) { stroke: var(--signal); stroke-width: 4; }
+  .pipe :global(.pf-flow path) { fill: none; stroke: var(--ink); stroke-width: 1; }
+  .pipe :global(.pf-cellbox) { fill: var(--bg); stroke: var(--signal); stroke-width: 1.5; }
+  .pipe :global(.pf-ink-stroke path) { fill: none; stroke: var(--ink); stroke-width: 1.25; }
+  .pipe :global(.pf-signal-stroke path), .pipe :global(path.pf-signal-stroke) { fill: none; stroke: var(--signal); stroke-width: 1.5; }
+  .pipe :global(.pf-wide) { stroke-width: 2; }
+  .pipe :global(.pf-ink circle), .pipe :global(.pf-ink) { fill: var(--ink); }
+  .pipe :global(.pf-thin path), .pipe :global(.pf-thin) { fill: none; stroke: var(--rule-ui); stroke-width: 1; }
+  .pipe :global(.pf-hollow), .pipe :global(.pf-hollow circle) { fill: var(--bg); stroke: var(--ink); stroke-width: 1.25; }
+  .pipe :global(.pf-signal-fill) { fill: var(--signal); }
+  .pipe :global(.pf-ring) { fill: none; stroke: var(--signal); stroke-width: 1; stroke-dasharray: 3 3; }
+  .pipe :global(.pf-centreline) { stroke: var(--signal); stroke-width: 1.5; stroke-dasharray: 5 4; }
+  .pipe :global(.pf-mono) { fill: var(--ink-3); font-family: var(--font-mono); font-size: 11px; }
+  .pipe :global(.pf-mono--signal) { fill: var(--signal-text); }
+
+  /* ---------- Pinned layout: desktop + motion (pipeline.ts adds .is-pinned) ---------- */
+  @media (min-width: 1024px) {
+    /* pinned at 'top top' under the fixed header: the stage owns the full
+       viewport and clears the header with its top padding */
+    .pipe.is-pinned { padding-bottom: var(--sp-6); }
+    .pipe.is-pinned .pipe__stage {
+      height: 100svh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-top: calc(var(--header-h) + var(--sp-5));
+      padding-bottom: var(--sp-5);
+    }
+    .pipe.is-pinned .pipe__grid {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--gutter);
+      align-items: center;
+    }
+    .pipe.is-pinned .pf { order: 0; grid-column: 5 / -1; }
+    .pipe.is-pinned .pipe__steps {
+      grid-column: 1 / span 4;
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .pipe.is-pinned .pipe__step {
+      position: relative;
+      grid-template-columns: 3.5rem minmax(0, 1fr);
+      grid-template-areas: 'n name' '. text';
+      padding-block: var(--sp-4);
+      border-top: 1px solid var(--rule);
+      transition: color var(--dur-3) var(--ease-out);
+      color: var(--ink-3);
+    }
+    .pipe.is-pinned .pipe__step:last-child { border-bottom: 1px solid var(--rule); }
+    /* emphasis: a signal rule draws down the active step; inactive names drop
+       to .55 of --ink (still ≥3:1 at this large-text size), body text stays ink-3 */
+    .pipe.is-pinned .pipe__step::before {
+      content: '';
+      position: absolute;
+      left: calc(var(--sp-4) * -1);
+      top: var(--sp-4);
+      bottom: var(--sp-4);
+      width: 2px;
+      background: var(--signal);
+      transform: scaleY(0);
+      transform-origin: 50% 0;
+      transition: transform var(--dur-2) var(--ease-snap);
+    }
+    .pipe.is-pinned .pipe__step.is-active::before { transform: scaleY(1); }
+    .pipe.is-pinned .pipe__step .pipe__name { color: var(--ink); opacity: .55; transition: opacity var(--dur-3) var(--ease-out); }
+    .pipe.is-pinned .pipe__step .pipe__text { color: var(--ink-3); transition: color var(--dur-3) var(--ease-out); }
+    .pipe.is-pinned .pipe__step.is-active .pipe__name { opacity: 1; }
+    .pipe.is-pinned .pipe__step.is-active .pipe__text { color: var(--ink-2); }
+    .pipe.is-pinned .pipe__step.is-active .pipe__n { color: var(--signal-text); }
+    .pipe.is-pinned .pipe__name { margin-top: 0; font-size: 1.5rem; }
+    .pipe.is-pinned .pipe__text { margin-top: var(--sp-2); font-size: 1rem; }
+    .pipe.is-pinned .pipe__mini { display: none; }
+    .pipe.is-pinned .pipe__n { padding-top: .45em; }
+
+    .pipe.is-pinned .pf__count { display: inline; }
+    .pipe.is-pinned .pf__body { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: center; }
+    .pipe.is-pinned .pf__cavity { max-height: calc(100svh - var(--header-h) - 200px); width: auto; max-width: 100%; }
+    .pipe.is-pinned .pf__detail {
+      display: grid;
+      align-self: stretch;
+      border-left: 1px solid var(--rule);
+      padding-left: var(--gutter);
+    }
+    .pipe.is-pinned .pf__panel {
+      grid-area: 1 / 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: var(--sp-4);
+      opacity: 0;
+      transform: translate3d(0, 8px, 0);
+      transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out);
+    }
+    .pipe.is-pinned .pf__panel svg { width: 100%; max-width: 260px; height: auto; }
+    .pipe.is-pinned .pf__progress {
+      display: block;
+      height: 1px;
+      background: var(--rule);
+    }
+    .pipe.is-pinned .pf__progress span {
+      display: block;
+      height: 1px;
+      background: var(--signal);
+      transform-origin: 0 50%;
+      transform: scaleX(0);
+    }
+
+    /* layer visibility by step (accumulating on the cavity, exclusive in the detail) */
+    .pipe.is-pinned :global(.pf-l) { transition: opacity var(--dur-3) var(--ease-out); }
+    .pipe.is-pinned .pf[data-step='0'] :global(.pf-l--cell),
+    .pipe.is-pinned .pf[data-step='0'] :global(.pf-l--stream),
+    .pipe.is-pinned .pf[data-step='0'] :global(.pf-l--flow),
+    .pipe.is-pinned .pf[data-step='0'] :global(.pf-l--centre),
+    .pipe.is-pinned .pf[data-step='1'] :global(.pf-l--stream),
+    .pipe.is-pinned .pf[data-step='1'] :global(.pf-l--flow),
+    .pipe.is-pinned .pf[data-step='1'] :global(.pf-l--centre),
+    .pipe.is-pinned .pf[data-step='2'] :global(.pf-l--centre) { opacity: 0; }
+    .pipe.is-pinned .pf[data-step='2'] :global(.pf-l--collide),
+    .pipe.is-pinned .pf[data-step='3'] :global(.pf-l--collide),
+    .pipe.is-pinned .pf[data-step='3'] :global(.pf-l--stream) { opacity: 0; }
+    .pipe.is-pinned .pf[data-step='3'] :global(.pf-l--flow) { opacity: .45; }
+
+    .pipe.is-pinned .pf[data-step='0'] .pf__panel[data-panel='0'],
+    .pipe.is-pinned .pf[data-step='1'] .pf__panel[data-panel='1'],
+    .pipe.is-pinned .pf[data-step='2'] .pf__panel[data-panel='2'],
+    .pipe.is-pinned .pf[data-step='3'] .pf__panel[data-panel='3'] { opacity: 1; transform: none; }
+
+    .pipe.is-pinned .pipe__links { margin-top: var(--sp-5); }
+  }
+
+  /* static composite: the stream arrows sit on top of the collide stencil, show only stream */
+  .pf[data-step='all'] :global(.pf-l--collide) { opacity: 0; }
+</style>

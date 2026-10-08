@@ -1,0 +1,56 @@
+---
+/**
+ * Home section head (plan 3.3 label grammar, 4.4 #8):
+ * a strong hairline that draws (scaleX) + "[ 02 ] SELECTED WORK" in the margin
+ * column + the H2 in the copy column. The block fades once on entry.
+ */
+interface Props {
+  n: string;
+  label: string;
+  id: string;
+  /** right-aligned mono aside, e.g. "Updated Oct 2026" */
+  aside?: string;
+  /** Label-only head: the H2 stays for the outline but is visually hidden,
+      so the section's own content carries the display type (varies the rhythm). */
+  quiet?: boolean;
+}
+const { n, label, id, aside, quiet = false } = Astro.props;
+---
+
+<div class:list={['sh grid', { 'sh--quiet': quiet }]} data-reveal>
+  <span class="sh__rule reveal-rule" aria-hidden="true"></span>
+  <p class="col-label t-label sh__label"><span class="label-index">[ {n} ]</span> {label}</p>
+  {
+    quiet ? (
+      <h2 id={id} class="sr-only"><slot /></h2>
+    ) : (
+      <div class="col-copy sh__copy">
+        <h2 id={id} class="sh__h"><slot /></h2>
+        {Astro.slots.has('intro') && <div class="sh__intro c-ink-2"><slot name="intro" /></div>}
+      </div>
+    )
+  }
+  {aside && <p class="sh__aside t-label">{aside}</p>}
+</div>
+
+<style>
+  .sh {
+    position: relative;
+    padding-top: var(--sp-4);
+    margin-bottom: var(--sp-7);
+    row-gap: var(--sp-4);
+  }
+  .sh__rule {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: var(--rule-strong);
+  }
+  .sh__label { padding-top: .35em; }
+  .sh--quiet { margin-bottom: var(--sp-5); }
+  .sh__intro { margin-top: var(--sp-4); max-width: 46ch; }
+  .sh__aside { grid-column: 1 / -1; }
+  @media (min-width: 1024px) {
+    .sh__aside { grid-column: 11 / -1; text-align: right; padding-top: .35em; grid-row: 1; }
+  }
+</style>

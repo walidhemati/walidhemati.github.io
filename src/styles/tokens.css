@@ -1,0 +1,165 @@
+/* ==========================================================================
+   Design tokens (plan sections 3.2, 3.3, 3.4, 4.2)
+   Light "paper" is the default; dark "darkroom" follows the OS unless the
+   visitor picks a theme (data-theme on <html>, set by the inline prefs script).
+   ========================================================================== */
+
+:root {
+  /* ---- Colour: LIGHT "paper" ---- */
+  --bg: #F2F0EB;
+  --bg-raised: #FAF9F6;
+  --ink: #111110;            /* 16.6:1 */
+  --ink-2: #5E5B55;          /* 5.9:1 secondary text */
+  --ink-3: #6B6760;          /* 4.9:1 mono labels */
+  --rule: #D8D4CC;           /* DECORATION ONLY (1.3:1) */
+  --rule-ui: #8C8880;        /* interactive borders: 3.1:1 on bg */
+  --rule-strong: #111110;
+  --signal: #E03E0B;         /* graphics only: brackets, boxes, traces */
+  --signal-text: #B8360B;    /* accent TEXT and links (5.2:1) */
+  --invert-bg: #111110;
+  --invert-fg: #F2F0EB;
+  --invert-ink-3: #8A867E;        /* 5.21:1 on #111110 */
+  --invert-signal-text: #FF5C2B;  /* 6.13:1 on #111110 */
+  --invert-rule: #2A2926;         /* decoration inside inverted sections */
+  --invert-rule-ui: #6A6760;      /* 3.45:1 on #111110 */
+  --grid-dot: rgb(17 17 16 / .07);
+  --grain-opacity: .045;
+  --selection-bg: #111110;
+  --selection-fg: #F2F0EB;
+  color-scheme: light;
+
+  /* ---- Type families ---- */
+  --font-sans: 'Archivo', 'Archivo Fallback', ui-sans-serif, system-ui, sans-serif;
+  --font-hero: 'Archivo Hero', 'Archivo', 'Archivo Fallback', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', 'Instrument Serif Fallback', ui-serif, Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'JetBrains Mono Fallback', ui-monospace, Menlo, monospace;
+
+  /* ---- Type scale: fluid 360px → 1440px (section 3.3) ---- */
+  --fs-mono-s: 0.6875rem;
+  --fs-mono: 0.8125rem;
+  --fs-body: clamp(1rem, .95rem + .2vw, 1.125rem);
+  --fs-lead: clamp(1.25rem, 1.1rem + .7vw, 1.75rem);
+  --fs-h3: clamp(1.5rem, 1.2rem + 1.2vw, 2.25rem);
+  --fs-h2: clamp(2.25rem, 1.4rem + 3.6vw, 4.5rem);
+  --fs-h1: clamp(3rem, 1rem + 8vw, 9rem);
+  --fs-mega: clamp(4rem, -0.5rem + 17vw, 15.5rem);
+
+  /* ---- Spacing: 8pt scale (section 3.4) ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+  --sp-9: 96px;
+  --sp-10: 128px;
+  --sp-11: 192px;
+  --section-pad: var(--sp-8);
+
+  /* ---- Grid ---- */
+  --cols: 4;
+  --gutter: clamp(16px, 2.5vw, 32px);
+  --margin: clamp(16px, 4vw, 64px);
+  --max-w: 1600px;
+  --measure: 64ch;
+  --header-h: 56px;
+
+  /* ---- Shape ---- */
+  --radius: 0;
+  --radius-pill: 999px;
+  --hairline: 1px;
+
+  /* ---- Motion (section 4.2) ---- */
+  --ease-out: cubic-bezier(.16, 1, .3, 1);      /* expo-out: entrances */
+  --ease-inout: cubic-bezier(.65, 0, .35, 1);   /* wipes, frame cuts */
+  --ease-snap: cubic-bezier(.3, 1.4, .5, 1);    /* bracket lock-on */
+  --dur-1: 120ms;
+  --dur-2: 240ms;
+  --dur-3: 480ms;
+  --dur-4: 800ms;
+  --dur-5: 1200ms;
+  --stagger-word: .04s;
+  --stagger-line: .08s;
+  --stagger-row: .06s;
+}
+
+@media (min-width: 640px) {
+  :root { --cols: 6; }
+}
+@media (min-width: 1024px) {
+  :root {
+    --cols: 12;
+    --section-pad: var(--sp-10);
+    --header-h: 64px;
+  }
+}
+
+/* ---- DARK "darkroom": OS preference, unless the visitor chose light ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D0D0C;
+    --bg-raised: #161614;
+    --ink: #ECEAE4;
+    --ink-2: #9A968E;
+    --ink-3: #8A867E;
+    --rule: #2A2926;
+    --rule-ui: #6A6760;
+    --rule-strong: #ECEAE4;
+    --signal: #FF5C2B;
+    --signal-text: #FF5C2B;
+    --invert-bg: #ECEAE4;
+    --invert-fg: #0D0D0C;
+    --invert-ink-3: #66625B;
+    --invert-signal-text: #B8360B;
+    --invert-rule: #D8D4CC;
+    --invert-rule-ui: #8C8880;
+    --grid-dot: rgb(255 255 255 / .06);
+    --grain-opacity: .06;
+    --selection-bg: #ECEAE4;
+    --selection-fg: #0D0D0C;
+    color-scheme: dark;
+  }
+}
+
+/* ---- DARK "darkroom": explicit choice ---- */
+:root[data-theme="dark"] {
+  --bg: #0D0D0C;
+  --bg-raised: #161614;
+  --ink: #ECEAE4;
+  --ink-2: #9A968E;
+  --ink-3: #8A867E;
+  --rule: #2A2926;
+  --rule-ui: #6A6760;
+  --rule-strong: #ECEAE4;
+  --signal: #FF5C2B;
+  --signal-text: #FF5C2B;
+  --invert-bg: #ECEAE4;
+  --invert-fg: #0D0D0C;
+  --invert-ink-3: #66625B;
+  --invert-signal-text: #B8360B;
+  --invert-rule: #D8D4CC;
+  --invert-rule-ui: #8C8880;
+  --grid-dot: rgb(255 255 255 / .06);
+  --grain-opacity: .06;
+  --selection-bg: #ECEAE4;
+  --selection-fg: #0D0D0C;
+  color-scheme: dark;
+}
+
+/* ---- Inverted sections: remap the tokens locally so components just work ---- */
+.invert {
+  --bg: var(--invert-bg);
+  --ink: var(--invert-fg);
+  --ink-2: var(--invert-ink-3);
+  --ink-3: var(--invert-ink-3);
+  --signal-text: var(--invert-signal-text);
+  --rule: var(--invert-rule);
+  --rule-ui: var(--invert-rule-ui);
+  --rule-strong: var(--invert-fg);
+  --selection-bg: var(--invert-fg);
+  --selection-fg: var(--invert-bg);
+  background: var(--invert-bg);
+  color: var(--invert-fg);
+}

@@ -1,0 +1,260 @@
+---
+/**
+ * HTML CV with print CSS (plan 5.2, 7.3). public/cv.pdf and
+ * public/personal/CV.pdf are generated FROM this page by scripts/cv-pdf.mjs.
+ *
+ * PRIVACY: no phone, WhatsApp, date of birth, nationality or address. Ever.
+ * HONESTY: dates only where the CV states them; no job title for Shikenso
+ * until Walid supplies it; project years are not shown (unconfirmed).
+ */
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { EMAIL, NAME, ROLE, SITE_URL, SOCIALS } from '../site.config';
+import { getWork, STATUS_LABEL } from '../lib/work';
+import { personSchema } from '../lib/schema';
+
+const { featured, also } = await getWork();
+const projects = [...featured, ...also].filter((w) => !w.data.needsSignoff);
+const host = SITE_URL.replace(/^https?:\/\//, '');
+
+const experience = [
+  { when: 'Current', org: 'Shikenso', place: 'Freiburg', role: null, text: 'Computer vision on broadcast and streamed video.' },
+  {
+    when: '07/2021 – 09/2021',
+    org: 'Miss Diamond',
+    place: 'Istanbul',
+    role: 'Web developer intern',
+    text: 'Developed the company website; maintained its computers and website.',
+  },
+];
+const education = [
+  { when: 'Current', org: 'University of Freiburg', place: 'Freiburg', what: 'Student' },
+  { when: '07/2019 – 07/2023', org: 'Istanbul Kültür University', place: 'Istanbul', what: 'B.Sc. Computer Engineering' },
+  { when: '2017 – 2019', org: 'Beşir Balcıoğlu Anadolu Lisesi', place: 'Istanbul', what: 'High school' },
+  { when: '2008 – 2017', org: 'Sharjah Indian School', place: 'Sharjah, UAE', what: 'School' },
+];
+const skills = [
+  { k: 'Daily', v: 'Python · PyTorch · computer vision on video · Git' },
+  { k: 'Comfortable', v: 'Kotlin / Android · C++ (Eigen, Meson, gtest) · CUDA via PyTorch · MATLAB · SQL' },
+  { k: 'Have used', v: 'C · Java · C# · Flutter / Dart · JavaScript · Solidity / Truffle' },
+];
+const languages = 'Dari (native) · English (C1) · Persian (B2 listening, B1 spoken) · Turkish (B1) · Urdu / Hindi (B1 spoken) · Arabic (A1–A2)';
+---
+
+<Base title={`CV: ${NAME}`} description={`CV of ${NAME}, ${ROLE} in Freiburg: computer vision, Android, scientific computing.`} jsonLd={personSchema()}>
+  <article class="cv wrap">
+    <header class="cv-head">
+      <p class="t-label cv-head__k">Curriculum vitae</p>
+      <h1 class="cv-name">{NAME}</h1>
+      <p class="cv-role">{ROLE} <span class="c-ink-3">·</span> Computer vision, Android <span class="c-ink-3">·</span> Freiburg</p>
+      <ul class="cv-contact t-mono" role="list">
+        <li><a href={`mailto:${EMAIL}`}>{EMAIL}</a></li>
+        <li><a href={SOCIALS.github.url}>github.com/{SOCIALS.github.handle}</a></li>
+        <li><a href={SOCIALS.linkedin.url}>LinkedIn</a></li>
+        <li><a href={`${SITE_URL}/`}>{host}</a></li>
+      </ul>
+      <p class="cv-actions no-print">
+        <a class="btn btn--solid" href="/cv.pdf" download>
+          <Icon name="download" size={14} /> Download PDF
+        </a>
+      </p>
+    </header>
+
+    <section class="cv-sec" aria-labelledby="cv-profile">
+      <h2 id="cv-profile" class="cv-sec__h t-label">Profile</h2>
+      <div class="cv-sec__body">
+        <p class="cv-profile">
+          ML and software engineer. I work on computer vision for broadcast and streamed video at Shikenso in Freiburg, build Android apps
+          that keep data on the device, and write scientific code in Python and C++. B.Sc. in Computer Engineering from Istanbul Kültür
+          University; studying at the University of Freiburg.
+        </p>
+      </div>
+    </section>
+
+    <section class="cv-sec" aria-labelledby="cv-exp">
+      <h2 id="cv-exp" class="cv-sec__h t-label">Experience</h2>
+      <ol class="cv-sec__body cv-entries" role="list">
+        {
+          experience.map((e) => (
+            <li class="cv-entry">
+              <p class="cv-entry__when t-mono">{e.when}</p>
+              <div class="cv-entry__main">
+                <h3 class="cv-entry__title">
+                  {e.role ? `${e.role}, ` : ''}
+                  {e.org}
+                  <span class="cv-entry__place">, {e.place}</span>
+                </h3>
+                <p>{e.text}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <section class="cv-sec" aria-labelledby="cv-edu">
+      <h2 id="cv-edu" class="cv-sec__h t-label">Education</h2>
+      <ol class="cv-sec__body cv-entries" role="list">
+        {
+          education.map((e) => (
+            <li class="cv-entry">
+              <p class="cv-entry__when t-mono">{e.when}</p>
+              <div class="cv-entry__main">
+                <h3 class="cv-entry__title">
+                  {e.org}
+                  <span class="cv-entry__place">, {e.place}</span>
+                </h3>
+                <p>{e.what}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <section class="cv-sec" aria-labelledby="cv-proj">
+      <h2 id="cv-proj" class="cv-sec__h t-label">Projects</h2>
+      <ol class="cv-sec__body cv-entries" role="list">
+        {
+          projects.map((w) => (
+            <li class="cv-entry">
+              <p class="cv-entry__when t-mono">{STATUS_LABEL[w.data.status].text}</p>
+              <div class="cv-entry__main">
+                <h3 class="cv-entry__title">
+                  <a href={`${SITE_URL}/work/${w.id}/`}>{w.data.title}</a>
+                  <span class="cv-entry__place"> · {w.data.discipline}</span>
+                </h3>
+                <p>{w.data.line}</p>
+                {w.data.stack.length > 0 && <p class="cv-entry__stack t-mono">{w.data.stack.join(' · ')}</p>}
+              </div>
+            </li>
+          ))
+        }
+        <li class="cv-entry">
+          <p class="cv-entry__when t-mono">Review paper</p>
+          <div class="cv-entry__main">
+            <h3 class="cv-entry__title">Machine Learning Based Android Malware Detection: A State of Art</h3>
+            <p>A review of machine-learning approaches to detecting malware on Android.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="cv-sec" aria-labelledby="cv-skills">
+      <h2 id="cv-skills" class="cv-sec__h t-label">Skills</h2>
+      <dl class="cv-sec__body cv-skills">
+        {
+          skills.map((s) => (
+            <div class="cv-entry">
+              <dt class="cv-entry__when t-mono">{s.k}</dt>
+              <dd class="cv-entry__main">{s.v}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </section>
+
+    <section class="cv-sec" aria-labelledby="cv-lang">
+      <h2 id="cv-lang" class="cv-sec__h t-label">Languages</h2>
+      <div class="cv-sec__body">
+        <p>{languages}</p>
+      </div>
+    </section>
+
+    <footer class="cv-foot t-mono c-ink-3">
+      <span>{NAME}</span>
+      <span>{host}/cv/</span>
+    </footer>
+  </article>
+</Base>
+
+<style>
+  .cv { padding-block: var(--sp-9) var(--section-pad); }
+  @media (min-width: 1024px) { .cv { padding-top: var(--sp-10); } }
+
+  .cv-head {
+    display: grid;
+    gap: var(--sp-4);
+    padding-bottom: var(--sp-7);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  .cv-name {
+    font-size: var(--fs-h1);
+    font-stretch: 72%;
+    font-weight: 700;
+    line-height: .88;
+    letter-spacing: -0.045em;
+  }
+  .cv-role { font-size: var(--fs-lead); line-height: 1.3; letter-spacing: -0.01em; max-width: none; }
+  .cv-contact { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-5); }
+  .cv-contact a { min-height: 24px; display: inline-flex; align-items: center; }
+  .cv-actions { margin-top: var(--sp-3); }
+
+  .cv-sec {
+    display: grid;
+    gap: var(--sp-4);
+    padding-block: var(--sp-6);
+    border-bottom: 1px solid var(--rule);
+  }
+  .cv-sec__h { margin: 0; font-size: var(--fs-mono-s); line-height: 1.3; letter-spacing: .06em; font-stretch: 100%; color: var(--signal-text); }
+  .cv-sec__body { margin: 0; min-width: 0; }
+  .cv-profile { font-size: 1.125rem; max-width: 70ch; }
+
+  .cv-entries, .cv-skills { display: grid; gap: var(--sp-5); }
+  .cv-entry { display: grid; gap: var(--sp-1); }
+  .cv-entry__when { color: var(--ink-3); margin: 0; }
+  .cv-entry__main { margin: 0; display: grid; gap: var(--sp-1); }
+  .cv-entry__main p { max-width: 70ch; }
+  .cv-entry__title { font-size: 1.125rem; font-weight: 600; line-height: 1.3; letter-spacing: -0.005em; font-stretch: 100%; }
+  .cv-entry__title a { text-decoration-color: var(--rule-ui); }
+  .cv-entry__place { font-weight: 400; color: var(--ink-2); }
+  .cv-entry__stack { color: var(--ink-3); }
+
+  @media (min-width: 640px) {
+    .cv-sec { grid-template-columns: 9rem 1fr; column-gap: var(--gutter); }
+    .cv-entry { grid-template-columns: 11rem 1fr; column-gap: var(--sp-5); }
+  }
+  /* ≥1024: the site grid itself. Labels in columns 1–3, everything else from
+     column 4, the same as Work, About and Now. */
+  @media (min-width: 1024px) {
+    .cv-head,
+    .cv-sec { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); }
+    .cv-head > * { grid-column: 4 / -1; }
+    .cv-head > .cv-head__k { grid-column: 1 / span 3; grid-row: 1; padding-top: 1.1em; }
+    .cv-sec { padding-block: var(--sp-7); }
+    .cv-sec__h { grid-column: 1 / span 3; }
+    .cv-sec__body { grid-column: 4 / -1; }
+    .cv-entry { grid-template-columns: minmax(0, 2fr) minmax(0, 7fr); }
+  }
+
+  .cv-foot { display: none; }
+
+  /* ---- Print: A4, two-column label grid, ink only ---- */
+  @media print {
+    @page { size: A4; margin: 14mm 15mm 14mm; }
+    .cv { padding: 0 !important; }
+    .cv-head { gap: 2.5mm; padding-bottom: 5mm; }
+    .cv-head__k { display: none; }
+    .cv-name { font-size: 30pt !important; line-height: 1; }
+    .cv-role { font-size: 12pt; }
+    .cv-contact { font-size: 8.5pt; gap: 1mm 6mm; }
+    .cv-contact a::after { content: none !important; }
+    .cv-sec {
+      grid-template-columns: 30mm 1fr;
+      column-gap: 6mm;
+      padding-block: 4mm;
+      break-inside: auto;
+    }
+    .cv-sec__h { color: #000 !important; font-size: 7.5pt !important; letter-spacing: .08em; padding-top: .6mm; }
+    .cv-entry__title { font-size: 10pt !important; }
+    .cv-profile { font-size: 10pt; }
+    .cv-entries, .cv-skills { gap: 2.6mm; }
+    .cv-entry { grid-template-columns: 27mm 1fr; column-gap: 4mm; break-inside: avoid; }
+    .cv-entry__when { font-size: 8pt; padding-top: .4mm; }
+    .cv-entry__title { font-size: 10pt; }
+    .cv-entry__main p { font-size: 9.5pt; }
+    .cv-entry__stack { font-size: 8pt !important; }
+    .cv-foot { display: flex; justify-content: space-between; margin-top: 5mm; font-size: 7.5pt; }
+    .print-url a[href^="http"]::after { content: none; }
+  }
+</style>

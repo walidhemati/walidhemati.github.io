@@ -1,0 +1,73 @@
+---
+n: 4
+title: Flatsnap
+line: An on-device document scanner for Android. It finds the page edges, corrects the perspective and reads the text with ML Kit, all on the phone.
+discipline: Android · On-device OCR
+domain: [android, ml-cv]
+yearConfirmed: false
+status: android
+stack: [Android, ML Kit]
+links:
+  privacy: https://walidhemati.github.io/flatsnap-privacy/
+featured: true
+description: Flatsnap is an on-device document scanner for Android with edge detection, perspective correction, ML Kit text recognition and PDF or image export, all on the phone.
+todo:
+  - Google Play URL. Only with a confirmed URL may the status become "live-play" (and the copy may say "on Google Play").
+  - 3–5 screenshots and a 6–8s screen recording.
+  - Start year, confirmed by Walid.
+---
+import TLDR from '../../components/content/TLDR.astro';
+import Decision from '../../components/content/Decision.astro';
+import Results from '../../components/content/Results.astro';
+import FlowDiagram from '../../components/content/FlowDiagram.astro';
+
+<TLDR
+  problem="Scanning a contract, a letter or a payslip should not mean uploading it to somebody else's computer."
+  approach="An Android scanner that finds the page edges, corrects the perspective and recognises text with Google's ML Kit, all on the phone itself."
+  result="An Android app with a public privacy policy. Text recognition happens on the device, not on a server."
+/>
+
+## Problem
+
+<p class="lede">The documents people scan are the ones they least want to share.</p>
+
+A phone is the most convenient scanner most people own. The things that get scanned are rental contracts, letters from the authorities and medical forms.
+
+Flatsnap reads them where they were photographed: on the phone.
+
+## Constraints
+
+- **Phone hardware only.** Recognition has to run on the device it was photographed with.
+- **No server in the loop.** Reading the text does not depend on sending the page anywhere.
+- **A published privacy policy.** The app's data handling is written down in a [privacy policy](https://walidhemati.github.io/flatsnap-privacy/) that anyone can read.
+
+## Approach
+
+<FlowDiagram
+  fig="FIG. 02"
+  caption="From camera to text without a network round trip. The page is found and flattened on the device, ML Kit reads it, and a file leaves the phone only when you export or share it."
+  boundary="On the device"
+  steps={[
+    { label: 'Capture', sub: 'edges found,\nperspective fixed' },
+    { label: 'Recognise', sub: 'ML Kit text\nrecognition' },
+    { label: 'Export', sub: 'PDF or images,\nwhen you choose' },
+  ]}
+/>
+
+## Decisions
+
+<div class="decisions">
+  <Decision chose="On-device ML Kit" over="a cloud OCR API">
+    Text recognition runs on the phone, so a scanned document never has to be sent anywhere to be read.
+  </Decision>
+</div>
+
+## Status
+
+<Results metrics={frontmatter.metrics}>
+  Flatsnap is an Android app. The source is not public; how it handles data is, in its [privacy policy](https://walidhemati.github.io/flatsnap-privacy/).
+</Results>
+
+## What I'd do next
+
+- Show it working on this page: screenshots and a short screen recording.

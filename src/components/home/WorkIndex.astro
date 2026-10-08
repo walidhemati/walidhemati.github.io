@@ -1,0 +1,320 @@
+---
+/**
+ * [02] Selected work (plan 5.3, 4.4 #12, #13).
+ *
+ * Desktop (≥1024px, hover-capable pointer): an index table. On hover/focus the
+ * row inverts with an ink wipe and the title stretches wdth 85 → 100; one shared
+ * preview plate follows the cursor (index-hover.ts) and brackets snap onto it.
+ * Without motion (or JS) every row shows a static thumbnail instead of the plate.
+ *
+ * Touch / < 1024px: a horizontal scroll-snap rail of 16:9 cards; brackets lock
+ * onto the card that snaps into view (rail.ts, IntersectionObserver .6).
+ *
+ * Reads the work collection: featured entries in N order. Years render only when
+ * confirmed (visibleYear); statuses come from STATUS_LABEL.
+ */
+import Brackets from '../Brackets.astro';
+import Icon from '../Icon.astro';
+import CoverArt from './CoverArt.astro';
+import SectionHead from './SectionHead.astro';
+import { getWork, indexLabel, visibleStatus, visibleYear, titleVT } from '../../lib/work';
+
+const { featured } = await getWork();
+const total = String(featured.length).padStart(2, '0');
+const rows = featured.map((w) => ({
+  id: w.id,
+  href: `/work/${w.id}/`,
+  n: indexLabel(w.data),
+  title: w.data.title,
+  discipline: w.data.discipline,
+  status: visibleStatus(w.data),
+  year: visibleYear(w.data),
+  line: w.data.needsSignoff ? (w.data.fallback ?? w.data.line) : w.data.line,
+}));
+---
+
+<section class="work section" aria-labelledby="work-h" data-work>
+  <div class="wrap">
+    <SectionHead n="02" label="Selected work" id="work-h" aside={`${total} projects`}>
+      Things I have built, and what they <em class="t-accent">do</em>.
+    </SectionHead>
+
+    <!-- Desktop index -->
+    <ol class="idx list-reset" role="list" data-idx>
+      {
+        rows.map((r) => (
+          <li class="idx__row" data-idx-row={r.id}>
+            <a class="idx__link" href={r.href}>
+              <span class="idx__n t-mono">{r.n}</span>
+              <span class="idx__title" style={`view-transition-name:${titleVT(r.id)};view-transition-class:title`}>
+                {r.title}
+              </span>
+              <span class="idx__meta t-mono">
+                <span>{r.discipline}</span>
+                {r.status && (
+                  <span class="idx__status">
+                    <span class="mark" data-mark={r.status.mark} aria-hidden="true" /> {r.status.text}
+                  </span>
+                )}
+              </span>
+              <span class="idx__year t-mono">{r.year ?? ''}</span>
+              <span class="idx__thumb" aria-hidden="true">
+                <CoverArt slug={r.id} />
+              </span>
+              <span class="idx__arrow" aria-hidden="true">
+                <Icon name="arrow-right" size={20} />
+              </span>
+              <span class="sr-only">. {r.line}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+
+    <!-- Touch / mobile rail -->
+    <ol class="rail list-reset" role="list" data-rail aria-label="Selected work">
+      {
+        rows.map((r) => (
+          <li class="rail__item" data-rail-item>
+            <a class="rail__card" href={r.href}>
+              <span class="rail__media">
+                <CoverArt slug={r.id} />
+                <Brackets size="14px" inset="0px" class="rail__brackets" />
+              </span>
+              <span class="rail__meta t-mono">
+                <span>{r.n}</span>
+                <span>{r.year ?? ''}</span>
+              </span>
+              <span class="rail__title">{r.title}</span>
+              <span class="rail__sub t-mono c-ink-2">
+                {r.status ? `${r.discipline} · ${r.status.text}` : r.discipline}
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+
+    <p class="work__all">
+      <a class="btn" href="/work/">All work <Icon name="arrow-right" /></a>
+    </p>
+  </div>
+
+  <!-- One shared preview plate (desktop + motion only); covers swap by id -->
+  <div class="plate" aria-hidden="true" data-plate>
+    <div class="plate__inner" data-plate-inner>
+      {
+        rows.map((r) => (
+          <div class="plate__cover" data-plate-cover={r.id} data-plate-name={r.title}>
+            <CoverArt slug={r.id} />
+          </div>
+        ))
+      }
+      <span class="plate__cap t-label" data-plate-cap></span>
+    </div>
+    <Brackets size="14px" inset="10px" class="plate__brackets" />
+  </div>
+</section>
+
+<style>
+  .work { padding-bottom: var(--sp-8); }
+
+  /* ======================= Desktop index ======================= */
+  .idx { display: none; border-top: 1px solid var(--rule-strong); }
+  .rail { display: flex; }
+  @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+    .idx { display: block; }
+    .rail { display: none; }
+  }
+
+  .idx__row { border-bottom: 1px solid var(--rule); }
+  .idx__link {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--gutter);
+    align-items: center;
+    min-height: 96px;
+    /* the row (and its ink wipe) stays inside the grid margins; only the
+       first and last cells are inset so text never touches the wipe edge */
+    padding: var(--sp-4) 0;
+    text-decoration: none;
+    color: var(--ink);
+    transition: color var(--dur-3) var(--ease-out);
+  }
+  /* (a) ink wipes in from the left; text inverts */
+  .idx__link::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--ink);
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 400ms var(--ease-out);
+  }
+  .idx__link:hover,
+  .idx__link:focus-visible { color: var(--bg); }
+  .idx__link:hover::before,
+  .idx__link:focus-visible::before { clip-path: inset(0 0 0 0); }
+  .idx__link:focus-visible { outline-offset: -2px; }
+
+  .idx__n { grid-column: 1 / span 1; padding-left: var(--sp-3); color: inherit; opacity: .7; }
+  .idx__title {
+    grid-column: 2 / span 6;
+    font-size: clamp(2rem, 1rem + 2.6vw, 3.75rem);
+    font-weight: 600;
+    font-stretch: 85%;
+    line-height: .95;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+    /* (b) the width axis stretches to at most 100 */
+    transition: font-stretch var(--dur-3) var(--ease-out);
+  }
+  .idx__link:hover .idx__title,
+  .idx__link:focus-visible .idx__title { font-stretch: 100%; }
+  .idx__meta {
+    grid-column: 8 / span 3;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .idx__status { display: inline-flex; align-items: center; gap: var(--sp-2); }
+  /* ● ◐ ○ drawn in CSS: the subset fonts carry no geometric shapes */
+  /* same status marks as /work: --signal in both themes */
+  .mark {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 1px solid var(--signal);
+    flex: none;
+  }
+  .mark[data-mark='●'] { background: var(--signal); }
+  .mark[data-mark='◐'] { background: linear-gradient(90deg, var(--signal) 50%, transparent 50%); }
+  .idx__year { grid-column: 11 / span 1; text-align: right; }
+  .idx__arrow {
+    grid-column: 12 / span 1;
+    justify-self: end;
+    padding-right: var(--sp-3);
+    transition: transform var(--dur-3) var(--ease-out);
+  }
+  .idx__link:hover .idx__arrow,
+  .idx__link:focus-visible .idx__arrow { transform: translateX(6px); }
+
+  /* Static thumbnail column: shown when the live plate is not running
+     (no JS, reduced motion, or the site toggle off) */
+  .idx__thumb {
+    display: none;
+    grid-column: 11 / span 1;
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    border: 1px solid var(--rule);
+    overflow: hidden;
+  }
+  .work:not(.has-plate) .idx__thumb { display: block; }
+  .work:not(.has-plate) .idx__year { grid-column: 10 / span 1; }
+  .work:not(.has-plate) .idx__meta { grid-column: 8 / span 2; }
+
+  /* ======================= Preview plate ======================= */
+  .plate {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 40;
+    width: 360px;
+    height: 240px;
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity var(--dur-2) var(--ease-out), visibility 0s linear var(--dur-2);
+    will-change: transform;
+  }
+  .work.has-plate .plate.is-on {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity var(--dur-2) var(--ease-out), visibility 0s;
+  }
+  .plate__inner {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border: 1px solid var(--ink);
+    background: var(--bg-raised);
+    clip-path: inset(50% 0 50% 0);
+    transition: clip-path var(--dur-3) var(--ease-out);
+  }
+  .plate.is-on .plate__inner { clip-path: inset(0 0 0 0); }
+  .plate__cover { position: absolute; inset: 0; opacity: 0; }
+  .plate__cover.is-current { opacity: 1; }
+  .plate__cap {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    padding: 2px 6px;
+    background: var(--bg);
+    color: var(--ink-3);
+  }
+  /* (d) brackets snap onto the plate */
+  .plate :global(.plate__brackets) {
+    inset: -22px;
+    transition: inset var(--dur-3) var(--ease-snap);
+  }
+  .plate.is-on :global(.plate__brackets) { inset: -10px; }
+
+  /* ======================= Rail ======================= */
+  .rail {
+    gap: var(--gutter);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--margin);
+    margin-inline: calc(var(--margin) * -1);
+    padding: var(--sp-5) var(--margin) var(--sp-4);
+    scrollbar-width: thin;
+    scrollbar-color: var(--rule-ui) transparent;
+  }
+  .rail__item {
+    flex: 0 0 min(82vw, 520px);
+    scroll-snap-align: start;
+  }
+  .rail__card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    text-decoration: none;
+  }
+  .rail__media {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 9;
+    margin-bottom: var(--sp-2);
+  }
+  .rail__media > :global(svg.cover) { border: 1px solid var(--rule); }
+  /* lock-on: brackets sit wide and faint, then snap tight (ease-snap) */
+  .rail :global(.rail__brackets) {
+    inset: 0;
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    :global(:root.js-motion:not([data-motion='reduce'])) .rail :global(.rail__brackets) {
+      inset: -14px;
+      opacity: 0;
+      transition: inset var(--dur-3) var(--ease-snap), opacity var(--dur-2) var(--ease-out);
+    }
+    :global(:root.js-motion:not([data-motion='reduce'])) .rail__item.is-locked :global(.rail__brackets) {
+      inset: -6px;
+      opacity: 1;
+    }
+  }
+  .rail__meta { display: flex; justify-content: space-between; color: var(--ink-3); }
+  .rail__title {
+    font-size: var(--fs-h3);
+    font-weight: 600;
+    font-stretch: 85%;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .rail__card:hover .rail__title { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .15em; }
+
+  .work__all { margin-top: var(--sp-7); }
+</style>

@@ -1,0 +1,54 @@
+/* ==========================================================================
+   Print (CV page and case studies print cleanly on paper)
+   ========================================================================== */
+@media print {
+  @page { margin: 16mm 14mm; }
+
+  :root {
+    --bg: #fff;
+    --bg-raised: #fff;
+    --ink: #000;
+    --ink-2: #333;
+    --ink-3: #555;
+    --rule: #bbb;
+    --rule-ui: #888;
+    --signal: #000;
+    --signal-text: #000;
+    color-scheme: light;
+  }
+
+  html, body { background: #fff !important; color: #000 !important; }
+  body { font-size: 10.5pt; line-height: 1.45; }
+  body::after { display: none !important; }
+
+  .site-header, .site-footer, .skip-link, .nav-progress,
+  .no-print, [data-no-print], dialog { display: none !important; }
+
+  .invert { background: #fff !important; color: #000 !important; }
+
+  main { padding: 0 !important; }
+  .wrap { padding-inline: 0 !important; max-width: none !important; }
+  .section { padding-block: 10mm !important; }
+
+  h1, h2, h3 { break-after: avoid; page-break-after: avoid; }
+  p, li, tr, figure { break-inside: avoid; page-break-inside: avoid; }
+
+  .t-mega { font-size: 48pt !important; }
+  h1, .t-h1 { font-size: 32pt !important; }
+  h2, .t-h2 { font-size: 18pt !important; }
+  h3, .t-h3 { font-size: 12pt !important; }
+
+  a { color: inherit !important; text-decoration: none !important; }
+  .prose a[href^="http"]::after,
+  .print-url a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-family: var(--font-mono);
+    font-size: 8pt;
+    color: #555;
+  }
+
+  .dot-grid::before { display: none !important; }
+
+  * { animation: none !important; transition: none !important; }
+  [data-reveal], [data-reveal-stagger] > *, .reveal-rule { opacity: 1 !important; transform: none !important; }
+}

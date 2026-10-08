@@ -1,0 +1,297 @@
+---
+/**
+ * Home (plan 5.3). Section order:
+ *   hero · spec band · signal trace · [01] pylbm pin (Shikenso fallback) ·
+ *   [02] selected work · inverted statement · pylbm numbers (verified only) ·
+ *   [03] also · [04] currently (/now) · [05] contact
+ * Motion lives in src/scripts/ (motion.ts → home.ts); this file is markup + layout.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import SignalTrace from '../components/SignalTrace.astro';
+import Icon from '../components/Icon.astro';
+import Hero from '../components/home/Hero.astro';
+import SpecBand from '../components/home/SpecBand.astro';
+import Pipeline from '../components/home/Pipeline.astro';
+import WorkIndex from '../components/home/WorkIndex.astro';
+import Statement from '../components/home/Statement.astro';
+import SectionHead from '../components/home/SectionHead.astro';
+import { personSchema, websiteSchema } from '../lib/schema';
+import { getWork, visibleMetrics } from '../lib/work';
+import { EMAIL, SOCIALS } from '../site.config';
+
+const { all, also } = await getWork();
+
+/* pylbm numbers band (4.4 #15): ONLY verified metrics render (quoted from the
+   pylbm README; see src/content/work/pylbm.mdx). */
+const pylbm = all.find((w) => w.id === 'pylbm');
+const numbers = pylbm ? visibleMetrics(pylbm.data) : [];
+
+/* [03] Also: second-tier entries from the collection, plus the review paper
+   (audit: repo Machine-Learning-Based-Android-Malware-Detection holds the PDF). */
+const alsoRows = [
+  ...also.map((w) => ({ title: w.data.title, line: w.data.line, href: `/work/${w.id}/`, external: false })),
+  {
+    title: 'Review paper',
+    line: 'Machine-learning-based Android malware detection: a review of the state of the art.',
+    href: 'https://github.com/walidhemati/Machine-Learning-Based-Android-Malware-Detection',
+    external: true,
+  },
+];
+
+/* [04] Currently: the latest /now entry */
+const nowEntries = (await getCollection('now')).sort((a, b) => b.data.month.valueOf() - a.data.month.valueOf());
+const now = nowEntries[0];
+const fmtDay = (d: Date) =>
+  d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+---
+
+<Base preloadHero jsonLd={[personSchema(), websiteSchema()]} bodyClass="page-home">
+  <div data-home>
+    <Hero />
+    <SpecBand />
+
+    <div class="wrap trace-wrap">
+      <SignalTrace seed={11} label="CH 01 · EEG-like trace" />
+    </div>
+
+    <Pipeline />
+    <WorkIndex />
+    <Statement />
+
+    {
+      numbers.length > 0 && (
+        <section class="numbers" aria-label="pylbm in numbers">
+          <div class="wrap">
+            <dl class="cells numbers__cells" data-reveal-stagger style={`--cells:${numbers.length}`}>
+              {numbers.map((m) => (
+                <div class="numbers__cell">
+                  <dt class="t-label">{m.label}</dt>
+                  <dd class="numbers__v tabular">
+                    {m.after}
+                    {m.unit && <span class="numbers__u"> {m.unit}</span>}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <p class="numbers__note t-mono c-ink-3">pylbm · validated against Ghia et al. (1982)</p>
+          </div>
+        </section>
+      )
+    }
+
+    <!-- [03] Also -->
+    <section class="section also" aria-labelledby="also-h">
+      <div class="wrap">
+        <SectionHead n="03" label="Also" id="also-h" quiet>Smaller projects and writing</SectionHead>
+        <ul class="also__list list-reset" role="list" data-reveal-stagger>
+          {
+            alsoRows.map((r) => (
+              <li class="also__row grid">
+                <a class="also__title" href={r.href} rel={r.external ? 'noopener' : undefined}>
+                  {r.title}
+                  <Icon name={r.external ? 'arrow-up-right' : 'arrow-right'} size={16} />
+                </a>
+                <p class="also__line c-ink-2">{r.line}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <!-- [04] Currently -->
+    {
+      now && (
+        <section class="section now" aria-labelledby="now-h">
+          <div class="wrap">
+            <SectionHead n="04" label="Currently" id="now-h" quiet>
+              Currently
+            </SectionHead>
+            <div class="grid">
+              <ol class="now__list col-copy list-reset" role="list" data-reveal-stagger>
+                {now.data.highlights.map((h, i) => (
+                  <li class="now__entry">
+                    {i === 0 ? (
+                      <time class="now__date t-label" datetime={isoDay(now.data.updated)}>
+                        {fmtDay(now.data.updated)}
+                      </time>
+                    ) : (
+                      <span class="now__date t-label" aria-hidden="true">·</span>
+                    )}
+                    <span class="now__text">{h}</span>
+                  </li>
+                ))}
+              </ol>
+              <p class="now__more col-copy">
+                <a href="/now/">
+                  More on /now <Icon name="arrow-right" size={16} />
+                </a>
+              </p>
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    <!-- [05] Contact -->
+    <section class="section contact" id="contact" aria-labelledby="contact-h">
+      <div class="wrap">
+        <SectionHead n="05" label="Contact" id="contact-h" quiet>Write to me</SectionHead>
+        <div class="grid">
+          <div class="contact__body" data-reveal>
+            <button type="button" class="contact__email" data-js-only data-copy={EMAIL} data-copy-fallback={`mailto:${EMAIL}`}>
+              <span class="contact__addr">{EMAIL}</span>
+              <span class="contact__hint t-label">
+                <Icon name="copy" size={14} /> Click to copy
+              </span>
+            </button>
+            <a class="contact__email contact__email--nojs" href={`mailto:${EMAIL}`} data-no-js-only>
+              <span class="contact__addr">{EMAIL}</span>
+            </a>
+            <div class="cluster contact__links">
+              <a class="btn btn--solid" href={`mailto:${EMAIL}`}>
+                Write an email <Icon name="mail" />
+              </a>
+              <a class="btn" href={SOCIALS.linkedin.url} rel="me noopener">
+                LinkedIn <Icon name="arrow-up-right" />
+              </a>
+              <a class="btn" href={SOCIALS.github.url} rel="me noopener">
+                GitHub <Icon name="arrow-up-right" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Copy toast (4.4 #14): role=status, announced politely -->
+  <div class="toast t-mono invert" role="status" aria-live="polite" data-toast></div>
+</Base>
+
+<style>
+  .trace-wrap { padding-block: var(--sp-8) 0; }
+  @media (min-width: 1024px) { .trace-wrap { padding-block: var(--sp-9) 0; } }
+
+  /* ---- Numbers band ---- */
+  .numbers { padding-block: var(--sp-8) 0; }
+  .numbers__v {
+    margin: var(--sp-3) 0 0;
+    font-size: var(--fs-h1);
+    font-weight: 700;
+    font-stretch: 72%;
+    line-height: .9;
+    letter-spacing: -0.04em;
+  }
+  .numbers__u { font-size: .35em; letter-spacing: 0; font-stretch: 100%; }
+  .numbers__note { margin-top: var(--sp-4); text-align: center; max-width: none; }
+
+  /* ---- Section rhythm (one value between sections: --section-pad, set as
+     padding-top on the next section; never stacked with a padding-bottom) ---- */
+  .also, .now { padding-bottom: 0; }
+
+  /* ---- Also ---- */
+  .also__row {
+    padding-block: var(--sp-5);
+    border-bottom: 1px solid var(--rule);
+    row-gap: var(--sp-2);
+    align-items: baseline;
+  }
+  .also__title {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: fit-content;
+    font-size: var(--fs-h3);
+    font-weight: 600;
+    font-stretch: 85%;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    text-decoration-color: transparent;
+  }
+  .also__title:hover { text-decoration-color: currentColor; }
+  .also__title :global(svg) { transition: transform var(--dur-3) var(--ease-out); }
+  .also__title:hover :global(svg) { transform: translate(3px, -1px); }
+  @media (min-width: 640px) {
+    .also__title { grid-column: 1 / span 3; }
+    .also__line { grid-column: 4 / -1; }
+  }
+  @media (min-width: 1024px) {
+    .also__title { grid-column: 4 / span 4; }
+    .also__line { grid-column: 8 / span 5; }
+  }
+
+  /* ---- Currently: a dated mono log ---- */
+  .now__entry {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-1) var(--gutter);
+    padding-block: var(--sp-4);
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 640px) {
+    .now__entry { grid-template-columns: 9.5rem minmax(0, 1fr); align-items: baseline; }
+  }
+  .now__date { color: var(--signal-text); white-space: nowrap; }
+  span.now__date { color: var(--ink-3); }
+  @media (max-width: 639px) { span.now__date { display: none; } }
+  .now__text {
+    font-size: var(--fs-lead);
+    line-height: 1.3;
+    letter-spacing: -0.005em;
+    word-spacing: .05em;
+    text-wrap: pretty;
+  }
+  .now__more { margin-top: var(--sp-5); font-family: var(--font-mono); font-size: var(--fs-mono); }
+  .now__more a { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 24px; }
+
+  /* ---- Contact ---- */
+  .contact { padding-bottom: 0; }
+  .contact__email {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    max-width: 100%;
+    text-align: left;
+  }
+  .contact__body { grid-column: 1 / -1; }
+  .contact__email { color: var(--ink); text-decoration: none; }
+  .contact__addr {
+    font-size: clamp(2.5rem, .25rem + 7.2vw, 7.5rem);
+    font-weight: 600;
+    font-stretch: 72%;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    overflow-wrap: anywhere;
+    background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+    padding-bottom: .08em;
+    transition: background-size var(--dur-3) var(--ease-out), color var(--dur-2) var(--ease-out);
+  }
+  .contact__email:hover .contact__addr,
+  .contact__email:focus-visible .contact__addr { background-size: 100% 1px; color: var(--signal-text); }
+  .contact__hint { display: inline-flex; align-items: center; gap: 6px; }
+  .contact__links { margin-top: var(--sp-7); --cluster: var(--sp-3); }
+
+  /* ---- Toast ---- */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: var(--sp-5);
+    z-index: 60;
+    padding: var(--sp-3) var(--sp-4);
+    font-size: var(--fs-mono);
+    transform: translate(-50%, 0);
+    opacity: 0;
+    pointer-events: none;
+    /* never visibility:hidden: the live region must stay in the a11y tree */
+    transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-3) var(--ease-out);
+  }
+  .toast:empty { padding: 0; }
+  .toast.is-on { opacity: 1; }
+  @media (prefers-reduced-motion: no-preference) {
+    :global(:root:not([data-motion='reduce'])) .toast:not(.is-on) { transform: translate(-50%, 12px); }
+  }
+</style>

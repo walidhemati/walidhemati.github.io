@@ -1,0 +1,91 @@
+---
+/**
+ * EEG VAE hero plate. ILLUSTRATIVE EEG-like traces generated at build time
+ * (seeded, same generator idea as SignalTrace) compressed into a small latent
+ * vector. Not data from DEAP or SEED; the caption says so.
+ */
+function prng(a: number) {
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const W = 520;
+const H = 54;
+function trace(seed: number) {
+  const r = prng(seed);
+  const pa = r() * 6.28;
+  const pb = r() * 6.28;
+  let prev = 0;
+  const pts: string[] = [];
+  const P = 220;
+  for (let i = 0; i < P; i++) {
+    const t = i / (P - 1);
+    let v = Math.sin(t * 6.28 * 17 + pa) * 0.34 + Math.sin(t * 6.28 * 41 + pb) * 0.16 + Math.sin(t * 6.28 * 1.4 + pa) * 0.2 + (r() - 0.5) * 0.4;
+    v = prev * 0.35 + v * 0.65;
+    prev = v;
+    const y = H / 2 - Math.max(-1, Math.min(1, v)) * H * 0.42;
+    pts.push(`${i === 0 ? 'M' : 'L'}${((t * W)).toFixed(1)} ${y.toFixed(1)}`);
+  }
+  return pts.join('');
+}
+const channels = [11, 23, 37, 41, 59].map((s, i) => ({ d: trace(s), label: `CH ${String(i + 1).padStart(2, '0')}` }));
+const z = [0.7, 0.25, 0.9, 0.45, 0.15, 0.6, 0.35, 0.8];
+---
+
+<figure class="fig plate" data-figure>
+  <div class="plate__grid plate__grid--eeg dot-grid">
+    <div class="plate__panel">
+      <p class="t-label plate__k">A · Multichannel EEG</p>
+      <!-- channel labels are HTML at --fs-mono; only the traces scale with the panel -->
+      <div class="eeg-chs" aria-hidden="true">
+        {
+          channels.map((c) => (
+            <div class="eeg-ch">
+              <span class="eeg-ch__k t-mono">{c.label}</span>
+              <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" class="eeg-ch__svg" focusable="false">
+                <line x1="0" y1={H / 2} x2={W} y2={H / 2} class="p-base" vector-effect="non-scaling-stroke" />
+                <path d={c.d} class="p-trace" vector-effect="non-scaling-stroke" data-draw />
+              </svg>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+    <div class="plate__panel plate__panel--z">
+      <p class="t-label plate__k">B · Latent factors z</p>
+      <svg viewBox="0 0 200 320" class="plate__svg plate__svg--z" aria-hidden="true" focusable="false">
+        <path d="M0 40L60 110V210L0 280Z" class="p-enc" />
+        <text x="8" y="164" class="p-mono eeg-z-text">enc</text>
+        {z.map((v, i) => (
+          <g>
+            <rect x="100" y={44 + i * 30} width="72" height="20" class="p-zcell" />
+            <rect x="100" y={44 + i * 30} width={72 * v} height="20" class="p-zfill" />
+          </g>
+        ))}
+        <text x="100" y="32" class="p-mono p-mono--signal eeg-z-text">z</text>
+      </svg>
+    </div>
+  </div>
+  <figcaption class="fig__caption">
+    <span class="fig__n">FIG. 01</span>
+    <span>Many noisy channels in, a handful of latent factors out. The traces are generated for this page and are not data from DEAP or SEED.</span>
+  </figcaption>
+</figure>
+
+<style>
+  .eeg-chs { display: grid; gap: var(--sp-2); }
+  .eeg-ch {
+    display: grid;
+    grid-template-columns: 4.5em minmax(0, 1fr);
+    align-items: center;
+    column-gap: var(--sp-3);
+  }
+  .eeg-ch__k { font-size: var(--fs-mono); color: var(--ink-2); white-space: nowrap; }
+  .eeg-ch__svg { width: 100%; height: clamp(36px, 5vw, 56px); overflow: visible; }
+  /* panel B renders at ~.75 scale (max-width 150px on a 200-unit viewBox): 15 units ≈ 11px */
+  .eeg-z-text { font-size: 15px; }
+</style>

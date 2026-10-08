@@ -1,0 +1,51 @@
+name: QA
+
+on:
+  pull_request:
+  push:
+    branches: [main, redesign]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: astro check
+        run: npx astro check
+      - name: Build
+        run: npm run build
+      - name: CDN guard (zero third-party requests)
+        run: |
+          if grep -rEn 'googleapis|gstatic|unpkg|jsdelivr' dist/; then
+            echo "::error::Third-party CDN reference found in dist/"
+            exit 1
+          fi
+          node scripts/cdn-guard.mjs dist
+      - name: Font budget (≤ 130 KB)
+        run: node scripts/font-budget.mjs dist
+      - name: No private data in the build
+        run: |
+          if grep -rEin 'whatsapp|date of birth|geburtsdatum|nationality|staatsangeh' dist/; then
+            echo "::error::Private data found in dist/"
+            exit 1
+          fi
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Playwright QA (axe, console, overflow, links, no-JS, CLS, JS budget, screenshots)
+        run: npx playwright test
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screens
+          path: test-results/screens

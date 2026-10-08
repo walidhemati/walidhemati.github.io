@@ -1,0 +1,96 @@
+---
+/**
+ * pylbm hero plate (plan 5.4 #3). A SCHEMATIC of the benchmark set-up, not
+ * simulation output: (A) the lid-driven cavity with its boundary conditions
+ * on a lattice, (B) the D2Q9 stencil (9 discrete velocities per node).
+ * Only textbook facts of the method are drawn; no values from the README.
+ */
+const N = 15; // lattice dots per side (schematic)
+const S = 320;
+const O = 60;
+const step = S / (N + 1);
+const dots: [number, number][] = [];
+for (let i = 1; i <= N; i++) for (let j = 1; j <= N; j++) dots.push([O + i * step, O + j * step]);
+const hi: [number, number] = [O + 10 * step, O + 6 * step];
+
+// D2Q9: e0 rest, e1–e4 axis, e5–e8 diagonal (standard numbering)
+const C = 220;
+const L = 120;
+const dirs = [
+  { n: 1, x: 1, y: 0 },
+  { n: 2, x: 0, y: -1 },
+  { n: 3, x: -1, y: 0 },
+  { n: 4, x: 0, y: 1 },
+  { n: 5, x: 1, y: -1 },
+  { n: 6, x: -1, y: -1 },
+  { n: 7, x: -1, y: 1 },
+  { n: 8, x: 1, y: 1 },
+];
+---
+
+<figure class="fig plate" data-figure>
+  <div class="plate__grid plate__grid--2 dot-grid">
+    <div class="plate__panel">
+      <p class="t-label plate__k">A · Lid-driven cavity</p>
+      <svg viewBox="0 0 440 440" class="plate__svg" aria-hidden="true" focusable="false">
+        {dots.map(([x, y]) => <circle cx={x} cy={y} r="1.4" class="p-dot" />)}
+        <rect x={O} y={O} width={S} height={S} class="p-wall" />
+        <line x1={O} y1={O} x2={O + S} y2={O} class="p-lid" />
+        <g class="p-arrow">
+          <path d={`M${O + 70} ${O - 26}H${O + S - 70}`} data-draw />
+          <path d={`M${O + S - 80} ${O - 32}L${O + S - 70} ${O - 26}L${O + S - 80} ${O - 20}`} />
+        </g>
+        <text x={O + S / 2} y={O - 38} text-anchor="middle" class="p-mono p-mono--signal">moving lid · u = U</text>
+        <text x={O + S / 2} y={O + S + 28} text-anchor="middle" class="p-mono">no-slip · u = 0</text>
+        <text x={O - 18} y={O + S / 2} text-anchor="middle" class="p-mono" transform={`rotate(-90 ${O - 18} ${O + S / 2})`}>no-slip</text>
+        <text x={O + S + 18} y={O + S / 2} text-anchor="middle" class="p-mono" transform={`rotate(90 ${O + S + 18} ${O + S / 2})`}>no-slip</text>
+        <g class="p-bracket">
+          <path d={`M${hi[0] - 9} ${hi[1] - 4}V${hi[1] - 9}H${hi[0] - 4}`} />
+          <path d={`M${hi[0] + 4} ${hi[1] - 9}H${hi[0] + 9}V${hi[1] - 4}`} />
+          <path d={`M${hi[0] - 9} ${hi[1] + 4}V${hi[1] + 9}H${hi[0] - 4}`} />
+          <path d={`M${hi[0] + 4} ${hi[1] + 9}H${hi[0] + 9}V${hi[1] + 4}`} />
+        </g>
+        <circle cx={hi[0]} cy={hi[1]} r="3" class="p-node" />
+        <text x={hi[0] + 14} y={hi[1] - 12} class="p-mono p-mono--signal">node → B</text>
+      </svg>
+    </div>
+    <div class="plate__panel">
+      <p class="t-label plate__k">B · D2Q9 stencil</p>
+      <svg viewBox="0 0 440 440" class="plate__svg" aria-hidden="true" focusable="false">
+        <g class="p-lattice">
+          {[-1, 0, 1].map((k) => <line x1={C - L - 40} y1={C + k * L} x2={C + L + 40} y2={C + k * L} />)}
+          {[-1, 0, 1].map((k) => <line x1={C + k * L} y1={C - L - 40} x2={C + k * L} y2={C + L + 40} />)}
+        </g>
+        {
+          dirs.map((d) => {
+            const x2 = C + d.x * L;
+            const y2 = C + d.y * L;
+            const len = Math.hypot(x2 - C, y2 - C);
+            const ux = (x2 - C) / len;
+            const uy = (y2 - C) / len;
+            const hx = x2 - ux * 6;
+            const hy = y2 - uy * 6;
+            const px = -uy * 5;
+            const py = ux * 5;
+            return (
+              <g class="p-vec">
+                <path d={`M${C} ${C}L${hx} ${hy}`} data-draw />
+                <path class="p-head" d={`M${hx - ux * 8 + px} ${hy - uy * 8 + py}L${hx} ${hy}L${hx - ux * 8 - px} ${hy - uy * 8 - py}Z`} />
+                <text x={C + d.x * (L + 26)} y={C + d.y * (L + 26) + 4} text-anchor="middle" class="p-mono">
+                  e{d.n}
+                </text>
+              </g>
+            );
+          })
+        }
+        <circle cx={C} cy={C} r="5" class="p-node" />
+        {/* e0 sits in the free wedge between e4 (down) and e8 (down-right), clear of the arrow origin */}
+        <text x={C + 22} y={C + 44} text-anchor="middle" class="p-mono">e0</text>
+      </svg>
+    </div>
+  </div>
+  <figcaption class="fig__caption">
+    <span class="fig__n">FIG. 01</span>
+    <span>The benchmark. A square cavity whose lid slides at constant speed, solved on a lattice where every node carries nine velocity populations. Schematic, not simulation output.</span>
+  </figcaption>
+</figure>

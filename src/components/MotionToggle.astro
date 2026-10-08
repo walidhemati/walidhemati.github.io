@@ -1,0 +1,85 @@
+---
+/**
+ * Footer "Motion: on/off" toggle (plan 4.6 #4).
+ * Sets data-motion="reduce" on <html>, persists in localStorage (try/catch),
+ * and is read back by the blocking inline head script, so there is no FOUC.
+ * When the OS asks for reduced motion, the toggle reports "off · system".
+ * Dispatches `wh:motionchange` on window so motion.ts can tear down / rebuild.
+ */
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<button type="button" class:list={['motion-toggle', className]} data-motion-toggle data-js-only aria-pressed="true">
+  <span class="motion-toggle__dot" aria-hidden="true"></span>
+  <span>Motion: <span data-motion-label>on</span></span>
+</button>
+
+<style>
+  .motion-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: 24px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-s);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: inherit;
+  }
+  .motion-toggle__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    transition: background-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
+  }
+  .motion-toggle[aria-pressed='false'] .motion-toggle__dot {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px currentColor;
+  }
+  .motion-toggle[aria-disabled='true'] { cursor: default; }
+</style>
+
+<script>
+  import { PREF_KEYS } from '../site.config';
+
+  const root = document.documentElement;
+  const osReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  const sync = () => {
+    const userReduce = root.getAttribute('data-motion') === 'reduce';
+    const on = !userReduce && !osReduce.matches;
+    document.querySelectorAll<HTMLButtonElement>('[data-motion-toggle]').forEach((btn) => {
+      btn.setAttribute('aria-pressed', String(on));
+      if (osReduce.matches) btn.setAttribute('aria-disabled', 'true');
+      else btn.removeAttribute('aria-disabled');
+      const label = btn.querySelector('[data-motion-label]');
+      if (label) label.textContent = osReduce.matches ? 'off · system' : on ? 'on' : 'off';
+    });
+    // Start states only while motion is allowed and motion.ts is alive
+    if (on && root.classList.contains('motion-ready')) root.classList.add('js-motion');
+    if (!on) root.classList.remove('js-motion');
+    window.dispatchEvent(new CustomEvent('wh:motionchange', { detail: { on } }));
+  };
+
+  const toggle = () => {
+    if (osReduce.matches) return;
+    const reduce = root.getAttribute('data-motion') !== 'reduce';
+    if (reduce) root.setAttribute('data-motion', 'reduce');
+    else root.removeAttribute('data-motion');
+    try {
+      if (reduce) localStorage.setItem(PREF_KEYS.motion, 'reduce');
+      else localStorage.removeItem(PREF_KEYS.motion);
+    } catch {
+      /* storage blocked: applies to this page only */
+    }
+    sync();
+  };
+
+  document.querySelectorAll<HTMLButtonElement>('[data-motion-toggle]').forEach((btn) => btn.addEventListener('click', toggle));
+  osReduce.addEventListener('change', sync);
+  sync();
+</script>

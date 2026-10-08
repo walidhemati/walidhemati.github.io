@@ -1,0 +1,89 @@
+---
+/**
+ * Sticky table of contents (plan 5.4): ≥1024px only, built from the MDX h2s.
+ * A tiny IntersectionObserver marks the section in view (aria-current="true").
+ */
+interface Props {
+  headings: { depth: number; slug: string; text: string }[];
+}
+const items = Astro.props.headings.filter((h) => h.depth === 2);
+---
+
+{
+  items.length > 1 && (
+    <nav class="toc" aria-label="On this page" data-toc>
+      <p class="t-label toc__h">On this page</p>
+      <ol class="toc__list" role="list">
+        {items.map((h, i) => (
+          <li>
+            <a class="toc__link" href={`#${h.slug}`} data-toc-link={h.slug}>
+              <span class="toc__n">{String(i + 1).padStart(2, '0')}</span>
+              <span>{h.text}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )
+}
+
+<script>
+  const toc = document.querySelector<HTMLElement>('[data-toc]');
+  if (toc && 'IntersectionObserver' in window) {
+    const links = new Map<string, HTMLAnchorElement>();
+    toc.querySelectorAll<HTMLAnchorElement>('[data-toc-link]').forEach((a) => links.set(a.dataset.tocLink!, a));
+    const targets = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+    const visible = new Set<string>();
+    const set = () => {
+      // first heading (in document order) whose section is currently in view
+      const current = targets.find((t) => visible.has(t.id))?.id;
+      links.forEach((a, id) => (id === current ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current')));
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => (e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id)));
+        set();
+      },
+      { rootMargin: '-20% 0px -60% 0px' },
+    );
+    targets.forEach((t) => io.observe(t));
+  }
+</script>
+
+<style>
+  .toc { display: none; }
+  @media (min-width: 1024px) {
+    .toc {
+      display: block;
+      position: sticky;
+      top: calc(var(--header-h) + var(--sp-6));
+    }
+  }
+  .toc__h { margin-bottom: var(--sp-4); }
+  .toc__list { display: grid; border-top: 1px solid var(--rule); }
+  .toc__link {
+    display: flex;
+    gap: var(--sp-3);
+    align-items: baseline;
+    padding: var(--sp-2) 0;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-2);
+    font-size: .9375rem;
+    text-decoration: none;
+    position: relative;
+  }
+  .toc__n { font-family: var(--font-mono); font-size: var(--fs-mono-s); color: var(--ink-3); }
+  .toc__link:hover,
+  .toc__link[aria-current] { color: var(--ink); }
+  .toc__link[aria-current] .toc__n { color: var(--signal-text); }
+  .toc__link[aria-current]::before {
+    content: "";
+    position: absolute;
+    left: calc(var(--sp-3) * -1 - 1px);
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    margin-top: -3px;
+    background: var(--signal);
+  }
+</style>

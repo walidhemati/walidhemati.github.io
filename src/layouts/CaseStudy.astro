@@ -1,0 +1,420 @@
+---
+/**
+ * Case-study template (plan 5.4).
+ *
+ *   1  Header: mono line (N.02 / 05 · DISCIPLINE · [year]), H1, one-line impact
+ *   2  Spec sheet: ROLE · TIMELINE · TEAM · STACK · STATUS · LINKS
+ *   3  Hero plate (slot "plate"): a framed FIG. on the dot grid
+ *   4–10 MDX body: TL;DR, Problem, Constraints, Approach (+ diagram),
+ *        Decisions, Results (verified metrics only), What I'd do next
+ *   11 Next project row
+ *   + sticky TOC ≥1024px, 2px reading-progress bar (scroll timeline, @supports)
+ *
+ * HONESTY: needsSignoff entries render ONLY their fallback line (the page
+ * passes no body). Years only via visibleYear(); metrics only via <Results>.
+ * Inner pages carry no section-entry animation (plan 4.1 #1).
+ */
+import Base from './Base.astro';
+import SpecSheet from '../components/content/SpecSheet.astro';
+import Toc from '../components/content/Toc.astro';
+import NextProject from '../components/content/NextProject.astro';
+import VtTitle from '../components/content/VtTitle.astro';
+import Icon from '../components/Icon.astro';
+import { indexLabel, titleVT, visibleYear, type Work } from '../lib/work';
+import { PERSON_ID } from '../lib/schema';
+import { NAME, SITE_URL } from '../site.config';
+
+interface Props {
+  entry: Work;
+  next: Work;
+  /** Number of featured (N.xx) entries, for "N.02 / 05". */
+  total: number;
+  headings: { depth: number; slug: string; text: string }[];
+}
+
+const { entry, next, total, headings } = Astro.props;
+const d = entry.data;
+const year = visibleYear(d);
+const n = indexLabel(d);
+const kicker = [n ? `${n} / ${String(total).padStart(2, '0')}` : 'Also', d.discipline, year].filter(Boolean).join(' · ');
+const signoff = d.needsSignoff;
+const lead = signoff ? d.fallback! : d.line;
+const url = `${SITE_URL}/work/${entry.id}/`;
+
+// JSON-LD (plan 7.1): only for entries whose type is settled
+const author = { '@id': PERSON_ID };
+const ld: Record<string, unknown> | undefined =
+  entry.id === 'pylbm'
+    ? { '@context': 'https://schema.org', '@type': 'SoftwareSourceCode', name: d.title, description: d.line, url, codeRepository: d.links.repo, programmingLanguage: 'Python', author }
+    : entry.id === 'flatsnap'
+      ? { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: d.title, description: d.line, url, operatingSystem: 'Android', author }
+      : entry.id === 'eeg-emotion-vae'
+        ? { '@context': 'https://schema.org', '@type': 'CreativeWork', name: d.title, description: d.line, url, author }
+        : undefined;
+---
+
+<Base title={`${d.title}: ${NAME}`} description={d.description ?? lead} ogType="article" jsonLd={ld}>
+  <div class="read-progress" aria-hidden="true"></div>
+
+  <article class="cs" data-case={entry.id}>
+    <header class="cs-head dot-grid">
+      <div class="wrap cs-head__inner">
+        <p class="t-label cs-kicker">
+          <a class="cs-kicker__back" href="/work/">Work</a>
+          <span aria-hidden="true">/</span>
+          <span>{kicker}</span>
+        </p>
+        <h1 class="cs-title" style={`view-transition-name:${titleVT(entry.id)};view-transition-class:title`}>{d.title}</h1>
+        <p class="cs-line">{lead}</p>
+        {
+          signoff && (
+            <p class="t-label cs-private">
+              <span class="cs-private__dot" aria-hidden="true" />
+              Company work · details are not published
+            </p>
+          )
+        }
+      </div>
+    </header>
+
+    {
+      !signoff && (
+        <div class="wrap cs-spec">
+          <SpecSheet data={d} />
+        </div>
+      )
+    }
+
+    {
+      !signoff && Astro.slots.has('plate') && (
+        <div class="wrap cs-plate">
+          <slot name="plate" />
+        </div>
+      )
+    }
+
+    {
+      !signoff && (
+        <div class="wrap grid cs-body">
+          <aside class="cs-aside">
+            <Toc headings={headings} />
+          </aside>
+          <div class="cs-prose prose">
+            <slot />
+          </div>
+        </div>
+      )
+    }
+
+    <div class="wrap cs-back">
+      <a class="cs-back__link t-mono" href="/work/">
+        <Icon name="arrow-left" size={14} />
+        <span>All work</span>
+      </a>
+    </div>
+  </article>
+
+  <NextProject next={next} />
+  <VtTitle />
+</Base>
+
+<style>
+  /* ---- Reading progress: decorative, scroll-timeline only, hidden elsewhere (4.4 #19) ---- */
+  .read-progress { display: none; }
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      :root:not([data-motion="reduce"]) .read-progress {
+        display: block;
+        position: fixed;
+        inset: 0 0 auto 0;
+        height: 2px;
+        z-index: 1000;
+        background: var(--signal);
+        transform-origin: 0 50%;
+        transform: scaleX(0);
+        animation: read-progress linear both;
+        animation-timeline: scroll(root block);
+      }
+    }
+  }
+  @keyframes read-progress {
+    to { transform: scaleX(1); }
+  }
+
+  /* ---- Header ---- */
+  .cs-head {
+    padding-block: var(--sp-9) var(--sp-7);
+  }
+  @media (min-width: 1024px) {
+    .cs-head { padding-block: var(--sp-10) var(--sp-8); }
+  }
+  .cs-head__inner { display: grid; gap: var(--sp-5); }
+  .cs-kicker { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: baseline; }
+  .cs-kicker__back {
+    color: var(--ink-3);
+    text-decoration: none;
+    min-height: 24px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .cs-kicker__back:hover { color: var(--signal-text); }
+  .cs-title {
+    font-size: var(--fs-h1);
+    font-stretch: 72%;
+    font-weight: 700;
+    line-height: .88;
+    letter-spacing: -0.045em;
+    max-width: 14ch;
+    overflow-wrap: break-word;
+    hyphens: manual;
+  }
+  .cs-line {
+    font-size: var(--fs-lead);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    max-width: 40ch;
+    color: var(--ink-2);
+  }
+  @media (min-width: 1024px) {
+    .cs-line { margin-left: calc((100% - 11 * var(--gutter)) / 12 * 3 + 3 * var(--gutter)); }
+  }
+
+  /* Sign-off-gated entries (Shikenso): a deliberate short page, no spec band */
+  .cs-private {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin-top: var(--sp-3);
+  }
+  @media (min-width: 1024px) {
+    .cs-private { margin-left: calc((100% - 11 * var(--gutter)) / 12 * 3 + 3 * var(--gutter)); }
+  }
+  .cs-private__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--signal); }
+  .cs:has(.cs-private) .cs-head { padding-bottom: var(--sp-9); }
+
+  /* ---- Spec sheet + plate ---- */
+  .cs-spec { margin-top: 0; }
+  .cs-plate { margin-top: var(--sp-8); }
+
+  /* ---- Body: TOC in the margin column, prose on a subgrid (figures may widen) ---- */
+  .cs-body {
+    padding-block: var(--sp-8) var(--sp-9);
+  }
+  .cs-aside { display: none; }
+  @media (min-width: 1024px) {
+    .cs-body { padding-block: var(--sp-9) var(--sp-10); }
+    .cs-aside { display: block; grid-column: 1 / span 2; }
+    .cs-prose {
+      grid-column: 4 / -1;
+      max-width: none;
+      display: grid;
+      grid-template-columns: subgrid;
+      align-content: start;
+    }
+    /* one right edge for the whole body: rules, prose, figures and decisions
+       all end on column 10 */
+    .cs-prose > :global(*) { grid-column: 1 / span 7; }
+  }
+
+  /* Section heads: numbered, ruled, with a mono index */
+  .cs-prose { counter-reset: sec decision; }
+  .cs-prose :global(h2:not(.tldr__h)) {
+    counter-increment: sec;
+    margin-top: var(--sp-9);
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--rule-strong);
+    font-size: clamp(2rem, 1.2rem + 2.4vw, 3.25rem);
+    font-stretch: 85%;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.022em;
+    max-width: none;
+  }
+  .cs-prose :global(h2:not(.tldr__h))::before {
+    content: "[ " counter(sec, decimal-leading-zero) " ]";
+    display: block;
+    margin-bottom: var(--sp-5);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-s);
+    font-weight: 500;
+    font-stretch: 100%;
+    letter-spacing: .06em;
+    line-height: 1.3;
+    color: var(--ink-3);
+    white-space: pre;
+  }
+  .cs-prose :global(h2 + *) { margin-top: var(--sp-6); }
+  .cs-prose > :global(.tldr:first-child) { margin-top: 0; }
+  .cs-prose :global(.tldr + h2) { margin-top: var(--sp-9); }
+  .cs-prose :global(p),
+  .cs-prose :global(li) { color: var(--ink); }
+  .cs-prose :global(.lede) {
+    font-size: var(--fs-lead);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    max-width: 36ch;
+  }
+  .cs-prose :global(ul:not([role])) { padding-left: 0; list-style: none; }
+  .cs-prose :global(ul:not([role]) > li) {
+    position: relative;
+    padding-left: 1.6em;
+  }
+  .cs-prose :global(ul:not([role]) > li)::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: .78em;
+    width: .8em;
+    height: 1px;
+    background: var(--signal);
+  }
+  .cs-prose :global(.decisions) { margin-top: var(--sp-6); border-bottom: 1px solid var(--rule); }
+
+  .cs-back { padding-bottom: var(--sp-7); }
+  .cs-back__link {
+    display: inline-flex;
+    gap: var(--sp-2);
+    align-items: center;
+    min-height: 44px;
+    color: var(--ink-2);
+    text-decoration: none;
+  }
+  .cs-back__link:hover { color: var(--ink); }
+
+  /* ======================================================================
+     Figures and plates (shared by the plate + diagram components)
+     ====================================================================== */
+  :global(.fig) { margin: 0; }
+  .cs-prose :global(.fig) { margin-top: var(--sp-7); margin-bottom: var(--sp-3); }
+  :global(.fig__plate) {
+    position: relative;
+    padding: var(--sp-6) var(--sp-4);
+    border: 1px solid var(--rule);
+    background: var(--bg-raised);
+  }
+  @media (min-width: 1024px) {
+    :global(.fig__plate) { padding: var(--sp-7) var(--sp-6); }
+  }
+  :global(.fig__caption) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1) var(--sp-4);
+    margin-top: var(--sp-3);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    line-height: 1.5;
+    color: var(--ink-2);
+    max-width: 90ch;
+  }
+  :global(.fig__n) { color: var(--signal-text); font-weight: 500; white-space: nowrap; }
+
+  /* Plate: framed panels on the sensor dot grid */
+  :global(.plate__grid) {
+    display: grid;
+    gap: 1px;
+    border: 1px solid var(--rule);
+    background: var(--rule);
+  }
+  :global(.plate__grid)::before { z-index: 0; }
+  :global(.plate__panel) {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    align-content: start;
+    gap: var(--sp-4);
+    padding: var(--sp-5) var(--sp-4);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    min-width: 0;
+  }
+  @media (min-width: 640px) {
+    :global(.plate__grid--2) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    :global(.plate__grid--3) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    :global(.plate__grid--eeg) { grid-template-columns: 3fr 1fr; }
+  }
+  @media (min-width: 1024px) {
+    :global(.plate__panel) { padding: var(--sp-6); }
+  }
+  :global(.plate__svg) { width: 100%; height: auto; max-height: 520px; margin-inline: auto; overflow: visible; }
+  :global(.plate__svg--narrow) { max-width: 300px; }
+  :global(.plate__svg--z) { max-width: 150px; }
+  :global(.plate__panel--text) { align-content: center; }
+  :global(.plate__panel--text > .plate__k) { align-self: start; }
+
+  :global(.plate__rules) { display: grid; border-top: 1px solid var(--rule); }
+  :global(.plate__rules li) {
+    display: grid;
+    gap: var(--sp-1);
+    padding: var(--sp-4) 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  :global(.plate__para) {
+    font-size: var(--fs-h3);
+    font-stretch: 85%;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  :global(.plate__rules li > span:last-child) { font-family: var(--font-mono); font-size: var(--fs-mono); color: var(--ink-2); }
+
+  :global(.plate__ocr) {
+    display: grid;
+    gap: var(--sp-4);
+    padding: var(--sp-5);
+    border: 1px solid var(--rule-ui);
+    background: var(--bg);
+  }
+  :global(.plate__ocr-line) {
+    display: block;
+    width: var(--w);
+    height: .7em;
+    background: repeating-linear-gradient(90deg, var(--ink) 0 .9ch, transparent .9ch 1.15ch, var(--ink) 1.15ch 2.6ch, transparent 2.6ch 3ch);
+    opacity: .85;
+  }
+  :global(.plate__ocr-meta) { color: var(--signal-text); margin-top: var(--sp-2); }
+
+  /* SVG primitives used by the plates (all tokenised for light/dark/print) */
+  :global(.p-dot) { fill: var(--ink-3); opacity: .45; }
+  :global(.p-wall) { fill: none; stroke: var(--ink); stroke-width: 1.25; }
+  :global(.p-lid) { stroke: var(--signal); stroke-width: 4; }
+  :global(.p-arrow path),
+  :global(.p-vec path) { fill: none; stroke: var(--signal); stroke-width: 1.5; }
+  :global(.p-vec .p-head) { fill: var(--signal); stroke: none; }
+  :global(.p-node) { fill: var(--signal); }
+  :global(.p-lattice line) { stroke: var(--rule); stroke-width: 1; }
+  :global(.p-bracket path) { fill: none; stroke: var(--signal); stroke-width: 1.5; }
+  :global(.p-mono) { fill: var(--ink-2); font-family: var(--font-mono); font-size: 12px; }
+  :global(.p-mono--signal) { fill: var(--signal-text); font-weight: 500; }
+  :global(.p-paper) { fill: var(--bg-raised); stroke: var(--ink); stroke-width: 1; }
+  :global(.p-fold) { fill: none; stroke: var(--ink); stroke-width: 1; }
+  :global(.p-ink) { fill: var(--ink); }
+  :global(.p-line) { fill: var(--ink-3); opacity: .55; }
+  :global(.p-line--hi) { fill: var(--ink); opacity: 1; }
+  :global(.p-tag) { fill: var(--bg); stroke: var(--signal); stroke-width: 1; }
+  :global(.p-field) { fill: none; stroke: var(--rule-ui); stroke-width: 1; }
+  :global(.p-field--hi) { stroke: var(--signal); stroke-width: 1.5; }
+  :global(.p-device) { fill: none; stroke: var(--ink); stroke-width: 1.25; }
+  :global(.p-screen) { fill: var(--bg); stroke: var(--rule-ui); stroke-width: 1; }
+  :global(.p-base) { stroke: var(--rule); stroke-width: 1; }
+  :global(.p-trace) { fill: none; stroke: var(--ink); stroke-width: 1; stroke-linejoin: round; }
+  :global(.p-enc) { fill: none; stroke: var(--ink); stroke-width: 1; }
+  :global(.p-zcell) { fill: var(--bg); stroke: var(--rule-ui); stroke-width: 1; }
+  :global(.p-zfill) { fill: var(--signal); opacity: .9; }
+
+  /* VAE schematic (EEG case study) */
+  :global(.vae) { width: 100%; min-width: 600px; height: auto; overflow: visible; }
+  :global(.fig__plate:has(.vae)) { overflow-x: auto; }
+  :global(.vae rect), :global(.vae__trap) { fill: var(--bg); stroke: var(--ink); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  :global(.vae__box--sig rect) { stroke: var(--signal); stroke-width: 1.5; }
+  :global(.vae .vae__z) { fill: var(--signal); stroke: none; opacity: .9; }
+  :global(.vae__a) { fill: none; stroke: var(--ink); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  :global(.vae__a--sig) { stroke: var(--signal); }
+  :global(.vae__l) { fill: var(--ink); font-family: var(--font-sans); font-size: 16px; font-weight: 600; }
+  :global(.vae__s), :global(.vae__idx) { fill: var(--ink-2); font-family: var(--font-mono); font-size: 11.5px; }
+  :global(.vae__sig) { fill: var(--signal-text); font-family: var(--font-mono); font-size: 12px; font-weight: 500; }
+
+  @media print {
+    .cs-aside, .read-progress, .cs-back { display: none !important; }
+    .cs-head { padding-block: 0 6mm !important; }
+    .cs-title { font-size: 40pt !important; }
+  }
+</style>

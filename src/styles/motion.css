@@ -1,0 +1,287 @@
+/* ==========================================================================
+   Motion (plan section 4)
+
+   CONTRACT (4.1 #2, 4.6):
+   - Content never waits. Start states exist ONLY under html.js-motion, which the
+     blocking inline prefs script adds when motion is allowed. motion.ts adds
+     html.motion-ready on init. If it is still missing after 3s the inline script
+     removes js-motion, so a failed script never hides content. No JS = all visible.
+   - Two-key reduced motion: the OS setting OR the site toggle
+     (html[data-motion="reduce"]) turns every decorative effect off.
+   - Every decorative rule lives inside BOTH
+       @media (prefers-reduced-motion: no-preference)  and
+       :root:not([data-motion="reduce"])
+   - Cheap properties only: transform, opacity, clip-path, stroke-dashoffset.
+   ========================================================================== */
+
+/* ---- Safety net: when either key says reduce, nothing transitions ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ==========================================================================
+   Start states: only under js-motion (never on the LCP hero name)
+   Usage (home only, 4.4 #8):
+     <section data-reveal>            → single fade
+     <div class="reveal-rule">        → top hairline draws (scaleX)
+     <ul data-reveal-stagger> <li>    → rows fade up with a stagger
+   reveal script adds .is-in (IntersectionObserver). Scroll-driven CSS is used
+   where supported; one implementation per effect per browser is guaranteed by
+   gating the CSS path on @supports and the JS path on its absence.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  :root.js-motion:not([data-motion="reduce"]) [data-reveal] {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+    transition:
+      opacity var(--dur-4) var(--ease-out),
+      transform var(--dur-4) var(--ease-out);
+    transition-delay: var(--reveal-delay, 0s);
+  }
+  :root.js-motion:not([data-motion="reduce"]) [data-reveal].is-in {
+    opacity: 1;
+    transform: none;
+  }
+
+  :root.js-motion:not([data-motion="reduce"]) [data-reveal-stagger] > * {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+    transition:
+      opacity var(--dur-3) var(--ease-out),
+      transform var(--dur-3) var(--ease-out);
+    transition-delay: calc(var(--i, 0) * var(--stagger-row));
+  }
+  :root.js-motion:not([data-motion="reduce"]) [data-reveal-stagger].is-in > * {
+    opacity: 1;
+    transform: none;
+  }
+
+  :root.js-motion:not([data-motion="reduce"]) .reveal-rule {
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    transition: transform var(--dur-4) var(--ease-inout);
+  }
+  :root.js-motion:not([data-motion="reduce"]) .reveal-rule.is-in,
+  :root.js-motion:not([data-motion="reduce"]) .is-in > .reveal-rule {
+    transform: none;
+  }
+
+  /* Signal-trace divider draws left → right (4.4 #9) */
+  :root.js-motion:not([data-motion="reduce"]) .signal-trace__svg {
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path var(--dur-5) var(--ease-inout);
+  }
+  :root.js-motion:not([data-motion="reduce"]) .signal-trace.is-in .signal-trace__svg {
+    clip-path: inset(0 0 0 0);
+  }
+  /* the leading-edge dot lands when the stroke finishes */
+  :root.js-motion:not([data-motion="reduce"]) .signal-trace__dot {
+    opacity: 0;
+    transform: scale(0);
+    transition:
+      opacity var(--dur-1) linear calc(var(--dur-5) - var(--dur-1)),
+      transform var(--dur-2) var(--ease-snap) calc(var(--dur-5) - var(--dur-1));
+  }
+  :root.js-motion:not([data-motion="reduce"]) .signal-trace.is-in .signal-trace__dot {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ==========================================================================
+   Cross-document page transitions: "frame cut" (4.5)
+   Declared ONLY when the OS allows motion. The site toggle skips transitions
+   via pageswap/pagereveal in the inline prefs script.
+   ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+
+  ::view-transition { background: var(--ink); }
+
+  ::view-transition-old(root) {
+    animation: vt-lift 400ms var(--ease-inout) both;
+  }
+  ::view-transition-new(root) {
+    animation: vt-wipe-up 400ms var(--ease-inout) 120ms both;
+  }
+
+  /* Nav brackets glide between pages */
+  ::view-transition-group(nav-brackets) {
+    animation-duration: var(--dur-3);
+    animation-timing-function: var(--ease-snap);
+  }
+
+  /* Project title row → H1: position-only morph + cross-fade, no scale */
+  ::view-transition-group(*.title) {
+    animation-duration: 400ms;
+    animation-timing-function: var(--ease-inout);
+  }
+  ::view-transition-old(*.title),
+  ::view-transition-new(*.title) {
+    height: 100%;
+    width: auto;
+    object-fit: none;
+    object-position: left top;
+  }
+}
+
+@keyframes vt-lift {
+  to { transform: translate3d(0, -4%, 0); opacity: .35; }
+}
+@keyframes vt-wipe-up {
+  from { clip-path: inset(100% 0 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* ---- Theme toggle circular reveal (4.4 #18) ---- */
+:root.is-theme-swapping::view-transition-old(root) { animation: none; z-index: 0; }
+:root.is-theme-swapping::view-transition-new(root) {
+  animation: theme-reveal 450ms var(--ease-inout) both;
+  z-index: 1;
+}
+:root.is-theme-swapping::view-transition { background: transparent; }
+
+@keyframes theme-reveal {
+  from { clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 0%)); }
+  to { clip-path: circle(var(--vt-r, 150vmax) at var(--vt-x, 50%) var(--vt-y, 0%)); }
+}
+
+/* ---- Page-transition hairline (4.4 #1): 2px signal bar, transitions only ---- */
+.nav-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 2px;
+  z-index: 1001;
+  background: var(--signal);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-motion="reduce"]) .nav-progress.is-active {
+    animation: nav-progress 1.6s var(--ease-out) forwards;
+  }
+}
+@keyframes nav-progress {
+  0% { transform: scaleX(0); }
+  60% { transform: scaleX(.7); }
+  100% { transform: scaleX(.92); }
+}
+
+/* ==========================================================================
+   HOME motion layer (Home agent). Same contract as above: start states only
+   under html.js-motion, every decorative rule behind both reduce keys.
+   ========================================================================== */
+
+/* ---- Hero name: gated wdth settle 100 → 72 (4.4 #2) -----------------------
+   html.hero-settle is added by the inline prefs script ONLY when the hero font
+   is usable within ~100ms of first paint; otherwise the name is static at 72.
+   The name is never at opacity 0 (LCP). */
+@keyframes hero-settle {
+  from { font-stretch: 100%; }
+  to { font-stretch: 72%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root.hero-settle:not([data-motion="reduce"]) .hero__line {
+    animation: hero-settle 900ms var(--ease-out) both;
+  }
+  :root.hero-settle:not([data-motion="reduce"]) .hero__line + .hero__line {
+    animation-delay: 80ms;
+  }
+
+  /* Hero role line + lead: hidden only until SplitText has built the line masks
+     (hero.ts adds .is-split). The 3s safety timeout drops js-motion if it never does. */
+  :root.js-motion:not([data-motion="reduce"]) [data-split-lines]:not(.is-split) {
+    visibility: hidden;
+  }
+}
+/* SplitText line masks must not clip descenders of the lead */
+.split-line-mask { padding-bottom: .08em; margin-bottom: -.08em; }
+
+/* ---- Scroll-driven path (4.1 #4, 4.4 #5, #8, #9) ---------------------------
+   Where animation-timeline: view() exists, the reveals run on the compositor
+   and reveal.ts skips its IntersectionObserver (one implementation per browser).
+   The IO path above stays the fallback (Firefox stable). */
+@keyframes sd-fade {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sd-rise {
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sd-rule {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes sd-draw {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes sd-dot {
+  from { opacity: 0; transform: scale(0); }
+  to { opacity: 1; transform: none; }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    :root.js-motion:not([data-motion="reduce"]) [data-reveal] {
+      view-timeline-name: --reveal;
+      opacity: 1;
+      transform: none;
+      transition: none;
+      animation: sd-fade linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 45%;
+    }
+    :root.js-motion:not([data-motion="reduce"]) [data-reveal-stagger] > * {
+      opacity: 1;
+      transform: none;
+      transition: none;
+      animation: sd-rise linear both;
+      animation-timeline: view();
+      animation-range: entry calc(var(--i, 0) * 6%) entry calc(50% + var(--i, 0) * 6%);
+    }
+    /* the hairline is 1px tall, so it draws on its section's timeline */
+    :root.js-motion:not([data-motion="reduce"]) .reveal-rule {
+      transform-origin: 0 50%;
+      transform: none;
+      transition: none;
+      animation: sd-rule linear both;
+      animation-timeline: --reveal;
+      animation-range: entry 0% entry 80%;
+    }
+    :root.js-motion:not([data-motion="reduce"]) .signal-trace {
+      view-timeline-name: --trace;
+    }
+    :root.js-motion:not([data-motion="reduce"]) .signal-trace .signal-trace__svg {
+      clip-path: none;
+      transition: none;
+      animation: sd-draw linear both;
+      animation-timeline: --trace;
+      animation-range: entry 100% cover 70%;
+    }
+    :root.js-motion:not([data-motion="reduce"]) .signal-trace .signal-trace__dot {
+      opacity: 1;
+      transform: none;
+      transition: none;
+      animation: sd-dot linear both;
+      animation-timeline: --trace;
+      animation-range: cover 66% cover 72%;
+    }
+  }
+}

@@ -1,0 +1,356 @@
+---
+/**
+ * Work index (plan 5.2, 5.4 "Work index").
+ *  - Filter chips (aria-pressed, borders in --rule-ui): All · ML/CV · Android ·
+ *    Scientific · Research · Archive. Chips need JS, so they are hidden under
+ *    html.no-js and every row is simply visible.
+ *  - Filtering runs inside a same-document View Transition (rows get
+ *    view-transition-names only for the duration of the transition, so they
+ *    never escape the cross-document frame cut).
+ *  - Archive rows at the bottom in --ink-3. Years render only when confirmed.
+ */
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import VtTitle from '../../components/content/VtTitle.astro';
+import { FILTERS, getWork, indexLabel, titleVT, visibleStatus, visibleYear, type Work } from '../../lib/work';
+import { NAME } from '../../site.config';
+
+const { featured, also, archive } = await getWork();
+const live = [...featured, ...also];
+
+const keys = (w: Work) => [...w.data.domain, ...(w.data.archived ? ['archive'] : [])].join(' ');
+const matches = (w: Work, key: string) =>
+  key === 'all' ? true : key === 'archive' ? w.data.archived : w.data.domain.includes(key as never);
+const all = [...live, ...archive];
+const counts = Object.fromEntries(FILTERS.map((f) => [f.key, all.filter((w) => matches(w, f.key)).length]));
+/* The Year column exists only when a project row has a confirmed year.
+   Archive rows then fold their (rare) confirmed period into the discipline cell. */
+const hasYears = live.some((w) => visibleYear(w.data));
+---
+
+<Base title={`Work: ${NAME}`} description="Selected work by Walid Hemati: computer vision on video, privacy-first Android apps, scientific computing and research.">
+  <section class="wk-head wrap grid">
+    <p class="col-label t-label wk-head__label">[ 01 ] Work</p>
+    <div class="wk-head__main">
+      <h1 class="wk-title">Work<span class="wk-title__count t-mono" aria-hidden="true">({String(all.length).padStart(2, '0')})</span></h1>
+      <p class="t-lead wk-lead">
+        Computer vision on <span class="t-accent">broadcast video</span>, Android apps that keep data on the device, and scientific code in Python and C++.
+      </p>
+    </div>
+  </section>
+
+  <section class="wrap wk-list" aria-labelledby="wk-list-h">
+    <h2 id="wk-list-h" class="sr-only">Projects</h2>
+
+    <div class="wk-filters" role="group" aria-label="Filter projects" data-filters>
+      {
+        FILTERS.map((f, i) => (
+          <button type="button" class="wk-chip" aria-pressed={i === 0 ? 'true' : 'false'} data-filter={f.key}>
+            <span>{f.label}</span>
+            <span class="wk-chip__n" aria-hidden="true">{counts[f.key]}</span>
+          </button>
+        ))
+      }
+      <p class="sr-only" role="status" data-filter-status></p>
+    </div>
+
+    <div class:list={['wk-table', { 'wk-table--noyear': !hasYears }]} role="presentation">
+      <div class="wk-row wk-row--head t-label" aria-hidden="true">
+        <span>N°</span><span>Project</span><span>Discipline</span><span>Status</span>{hasYears && <span>Year</span>}<span></span>
+      </div>
+      <ol class="wk-rows" role="list" data-rows>
+        {
+          live.map((w) => {
+            const year = visibleYear(w.data);
+            const status = visibleStatus(w.data);
+            return (
+              <li class="wk-item" data-keys={keys(w)} data-slug={w.id}>
+                <a class="wk-row" href={`/work/${w.id}/`} data-vt-link>
+                  <span class="wk-row__n t-mono">{indexLabel(w.data) ?? '—'}</span>
+                  <span class="wk-row__title" data-vt-title={titleVT(w.id)}>{w.data.title}</span>
+                  <span class="wk-row__disc t-mono">{w.data.discipline}</span>
+                  <span class="wk-row__status t-mono">
+                    {status && (
+                      <>
+                        <span class:list={['wk-dot', { 'wk-dot--half': status.mark === '◐', 'wk-dot--hollow': status.mark === '○' }]} aria-hidden="true" />
+                        {status.text}
+                      </>
+                    )}
+                  </span>
+                  {hasYears && <span class="wk-row__year t-mono">{year ?? ''}</span>}
+                  <span class="wk-row__go" aria-hidden="true"><Icon name="arrow-right" size={20} /></span>
+                </a>
+              </li>
+            );
+          })
+        }
+      </ol>
+
+      <div class="wk-archive" data-archive>
+        <p class="t-label wk-archive__h">Archive · earlier and student projects</p>
+        <ul class="wk-rows wk-rows--archive" role="list">
+          {
+            archive.map((w) => {
+              const year = visibleYear(w.data);
+              const repo = w.data.links.repo;
+              return (
+                <li class="wk-item" data-keys={keys(w)} data-slug={w.id}>
+                  <div class="wk-row wk-row--archive">
+                    <span class="wk-row__n t-mono">—</span>
+                    <span class="wk-row__title">
+                      {repo ? (
+                        <a href={repo} rel="noopener">
+                          {w.data.title}
+                          <span class="sr-only"> (repository on GitHub)</span>
+                          <Icon name="arrow-up-right" size={14} />
+                        </a>
+                      ) : (
+                        w.data.title
+                      )}
+                      <span class="wk-row__line">{w.data.line}</span>
+                    </span>
+                    <span class="wk-row__disc t-mono">{hasYears || !year ? w.data.discipline : `${w.data.discipline} · ${year}`}</span>
+                    <span class="wk-row__status t-mono">{w.data.stack.slice(0, 3).join(' · ')}</span>
+                    {hasYears && <span class="wk-row__year t-mono">{year ?? ''}</span>}
+                    <span class="wk-row__go" aria-hidden="true" />
+                  </div>
+                </li>
+              );
+            })
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+  <VtTitle />
+</Base>
+
+<script>
+  const group = document.querySelector<HTMLElement>('[data-filters]');
+  if (group) {
+    const chips = [...group.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+    const items = [...document.querySelectorAll<HTMLElement>('.wk-item')];
+    const archive = document.querySelector<HTMLElement>('[data-archive]');
+    const status = group.querySelector<HTMLElement>('[data-filter-status]');
+    const root = document.documentElement;
+    const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches || root.getAttribute('data-motion') === 'reduce';
+
+    const apply = (key: string) => {
+      let shown = 0;
+      items.forEach((li) => {
+        const on = key === 'all' || (li.dataset.keys ?? '').split(' ').includes(key);
+        li.hidden = !on;
+        if (on) shown++;
+      });
+      if (archive) archive.hidden = !items.some((li) => !li.hidden && archive.contains(li));
+      chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.filter === key)));
+      if (status) status.textContent = `${shown} project${shown === 1 ? '' : 's'} shown`;
+    };
+
+    group.addEventListener('click', (e) => {
+      const chip = (e.target as Element).closest<HTMLButtonElement>('[data-filter]');
+      if (!chip || chip.getAttribute('aria-pressed') === 'true') return;
+      const key = chip.dataset.filter!;
+      const doc = document as Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void> } };
+      if (!doc.startViewTransition || reduce()) return apply(key);
+      // Name the rows only while this transition runs (so they reorder smoothly)
+      items.forEach((li) => (li.style.viewTransitionName = `wk-${li.dataset.slug}`));
+      root.classList.add('is-filtering');
+      const t = doc.startViewTransition(() => apply(key));
+      t.finished.finally(() => {
+        items.forEach((li) => (li.style.viewTransitionName = ''));
+        root.classList.remove('is-filtering');
+      });
+    });
+  }
+</script>
+
+<style>
+  /* ---- Head ---- */
+  .wk-head { padding-block: var(--sp-9) var(--sp-7); row-gap: var(--sp-5); }
+  .wk-head__main { display: grid; gap: var(--sp-6); }
+  @media (min-width: 1024px) {
+    .wk-head { padding-block: var(--sp-10) var(--sp-8); }
+    .wk-head__label { padding-top: 1.4em; }
+    .wk-head__main {
+      grid-column: 4 / -1;
+      grid-template-columns: auto 1fr;
+      align-items: end;
+      column-gap: var(--gutter);
+    }
+    .wk-lead { justify-self: end; margin-bottom: .35em; }
+  }
+  .wk-title {
+    font-size: var(--fs-mega);
+    font-stretch: 72%;
+    font-weight: 700;
+    line-height: .82;
+    letter-spacing: -0.05em;
+  }
+  .wk-title__count {
+    display: inline-block;
+    vertical-align: top;
+    margin-left: .35em;
+    font-size: var(--fs-mono);
+    letter-spacing: 0;
+    color: var(--signal-text);
+    line-height: 1;
+  }
+  .wk-lead { color: var(--ink-2); }
+
+  /* ---- Filters ---- */
+  .wk-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    padding-block: var(--sp-5);
+    border-top: 1px solid var(--rule-strong);
+  }
+  :global(html.no-js) .wk-filters { display: none; }
+  .wk-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: 36px;
+    padding: 0 var(--sp-4);
+    border: 1px solid var(--rule-ui);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    color: var(--ink);
+    transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
+  }
+  .wk-chip:hover { border-color: var(--ink); }
+  .wk-chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .wk-chip__n { font-size: var(--fs-mono-s); color: var(--ink-3); }
+  .wk-chip[aria-pressed="true"] .wk-chip__n { color: inherit; opacity: .75; }
+
+  /* ---- Table ---- */
+  .wk-list { padding-bottom: var(--section-pad); }
+  .wk-rows { border-top: 1px solid var(--rule); }
+  .wk-row {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: 3.5rem 1fr auto;
+    grid-template-areas:
+      "n title go"
+      "n disc  go"
+      "n status go";
+    gap: var(--sp-1) var(--sp-3);
+    align-items: baseline;
+    padding: var(--sp-4) 0;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .wk-row__n { grid-area: n; color: var(--ink-3); }
+  .wk-row__title { grid-area: title; }
+  .wk-row__disc { grid-area: disc; color: var(--ink-2); }
+  .wk-row__status { grid-area: status; display: inline-flex; align-items: center; gap: var(--sp-2); color: var(--ink-2); }
+  .wk-row__year { display: none; }
+  .wk-row__go { grid-area: go; align-self: center; }
+  .wk-row__year:empty { display: none; }
+
+  .wk-row__title {
+    font-size: var(--fs-h3);
+    font-stretch: 85%;
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  a.wk-row::before {
+    content: "";
+    position: absolute;
+    inset: -1px calc(var(--margin) * -1 / 2);
+    z-index: -1;
+    background: var(--ink);
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path var(--dur-3) var(--ease-out);
+  }
+  a.wk-row:hover,
+  a.wk-row:focus-visible { color: var(--bg); }
+  a.wk-row:hover::before,
+  a.wk-row:focus-visible::before { clip-path: inset(0); }
+  a.wk-row:hover > *,
+  a.wk-row:focus-visible > * { color: inherit; }
+  a.wk-row:focus-visible { outline-offset: 2px; }
+  .wk-row__go { transition: transform var(--dur-3) var(--ease-out); }
+  a.wk-row:hover .wk-row__go { transform: translateX(6px); }
+
+  .wk-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--signal); flex: none; }
+  .wk-dot--half { background: linear-gradient(90deg, var(--signal) 50%, transparent 50%); box-shadow: inset 0 0 0 1px var(--signal); }
+  .wk-dot--hollow { background: transparent; box-shadow: inset 0 0 0 1px var(--ink-3); }
+
+  @media (min-width: 1024px) {
+    .wk-row {
+      grid-template-columns: 5rem minmax(0, 5fr) minmax(0, 3fr) minmax(0, 2.2fr) 7rem 2rem;
+      grid-template-areas: "n title disc status year go";
+      align-items: center;
+      padding: var(--sp-5) 0;
+    }
+    .wk-row__year, .wk-row__year:empty { display: block; grid-area: year; color: var(--ink-3); }
+    .wk-table--noyear .wk-row {
+      grid-template-columns: 5rem minmax(0, 5fr) minmax(0, 3fr) minmax(0, 2.6fr) 2rem;
+      grid-template-areas: "n title disc status go";
+    }
+    .wk-row__title { font-size: clamp(1.75rem, 1rem + 1.6vw, 2.75rem); }
+    .wk-row--head {
+      padding: 0 0 var(--sp-3);
+      border-bottom: 0;
+    }
+    .wk-row--head > :nth-child(1) { grid-area: n; }
+    .wk-row--head > :nth-child(2) { grid-area: title; }
+    .wk-row--head > :nth-child(3) { grid-area: disc; }
+    .wk-row--head > :nth-child(4) { grid-area: status; }
+    .wk-row--head > :nth-child(5) { grid-area: year; }
+    .wk-table--noyear .wk-row--head > :nth-child(5) { grid-area: go; }
+  }
+  .wk-row--head { display: none; }
+  @media (min-width: 1024px) { .wk-row--head { display: grid; } }
+
+  /* ---- Archive ---- */
+  .wk-archive { margin-top: var(--sp-9); }
+  .wk-archive__h { padding-bottom: var(--sp-3); }
+  .wk-row--archive { color: var(--ink-3); }
+  .wk-row--archive .wk-row__title {
+    font-size: 1.25rem;
+    font-stretch: 100%;
+    display: grid;
+    gap: var(--sp-1);
+    color: var(--ink-2);
+  }
+  .wk-row--archive .wk-row__title a {
+    display: inline-flex;
+    gap: var(--sp-2);
+    align-items: center;
+    width: fit-content;
+    min-height: 24px;
+    color: var(--ink-2);
+  }
+  .wk-row--archive .wk-row__title a:hover { color: var(--signal-text); }
+  .wk-row__line {
+    font-size: .9375rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1.45;
+    color: var(--ink-3);
+    max-width: 60ch;
+  }
+  .wk-row--archive .wk-row__disc,
+  .wk-row--archive .wk-row__status { color: var(--ink-3); }
+  @media (min-width: 1024px) {
+    .wk-row--archive { align-items: start; }
+  }
+
+  /* Same-document filter transition (only while .is-filtering) */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.is-filtering::view-transition-group(*)) {
+      animation-duration: var(--dur-3);
+      animation-timing-function: var(--ease-out);
+    }
+    :global(html.is-filtering::view-transition-old(root)),
+    :global(html.is-filtering::view-transition-new(root)) { animation: none; }
+  }
+  :global(html.is-filtering::view-transition) { background: transparent; }
+</style>

@@ -1,0 +1,44 @@
+---
+/** 404: "object · not found" (plan 5.2). A detection box that locked onto nothing. */
+import Base from '../layouts/Base.astro';
+import Brackets from '../components/Brackets.astro';
+import Icon from '../components/Icon.astro';
+import { NAME } from '../site.config';
+---
+
+<Base title={`Not found: ${NAME}`} description="This page does not exist." noindex>
+  <section class="nf dot-grid">
+    <div class="wrap nf__inner">
+      <p class="t-label nf__k">Error 404 · frame scanned · 0 objects</p>
+      <h1 class="nf__title">
+        <span class="nf__box">
+          404
+          <Brackets size="22px" inset="18px" label="object · not found" />
+        </span>
+      </h1>
+      <p class="t-lead nf__lead">Nothing was detected at this address. The page may have moved when the site was rebuilt.</p>
+      <p class="cluster nf__links">
+        <a class="btn btn--solid" href="/"><Icon name="arrow-left" size={14} /> Back to the start</a>
+        <a class="btn" href="/work/">All work <Icon name="arrow-right" size={14} /></a>
+        <a class="btn" href="/cv/">CV <Icon name="arrow-right" size={14} /></a>
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf { padding-block: var(--sp-10) var(--section-pad); }
+  .nf__inner { display: grid; gap: var(--sp-6); justify-items: start; }
+  .nf__title {
+    margin-block: var(--sp-8) var(--sp-5);
+    font-family: var(--font-hero);
+    font-size: clamp(7rem, 2rem + 24vw, 22rem);
+    font-stretch: 72%;
+    font-weight: 700;
+    line-height: .8;
+    letter-spacing: -0.05em;
+  }
+  .nf__box { position: relative; display: inline-block; padding-inline: .04em; }
+  .nf__lead { color: var(--ink-2); }
+  .nf__links { --cluster: var(--sp-3); }
+</style>

@@ -1,0 +1,112 @@
+---
+/**
+ * Footer (plan 4.4 #17, wireframe 5.3): inverted band, framed by 1px rules.
+ *  row 1  status dot + static availability line (no marquee)
+ *  row 2  © year · name · Impressum · Datenschutz · GitHub · LinkedIn · Email
+ *  row 3  Motion: on/off · Theme · version
+ */
+import { AVAILABILITY, EMAIL, LEGAL_NAV, NAME, NAV, SITE_VERSION, SOCIALS } from '../site.config';
+import MotionToggle from './MotionToggle.astro';
+import ThemeToggle from './ThemeToggle.astro';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer invert">
+  <div class="wrap">
+    <p class="site-footer__availability">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span>{AVAILABILITY}</span>
+    </p>
+
+    <div class="site-footer__rows">
+      <!-- Site index: the only navigation on narrow screens without JS (the Menu dialog needs JS) -->
+      <nav class="site-footer__row site-footer__index" aria-label="Site index">
+        <ul class="cluster" role="list">
+          <li><a href="/">Home</a></li>
+          {
+            NAV.map((item) => (
+              <li>
+                <a href={item.href}>
+                  <span class="site-footer__n" aria-hidden="true">[{item.n}]</span> {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+      <nav class="site-footer__row site-footer__links" aria-label="Footer">
+        <span class="site-footer__copy">© {year} {NAME}</span>
+        <ul class="cluster" role="list">
+          {
+            LEGAL_NAV.map((l) => (
+              <li>
+                <a href={l.href} lang={l.lang}>
+                  {l.label}
+                </a>
+              </li>
+            ))
+          }
+          <li><a href={SOCIALS.github.url} rel="me noopener">GitHub ↗</a></li>
+          <li><a href={SOCIALS.linkedin.url} rel="me noopener">LinkedIn ↗</a></li>
+          <li><a href={`mailto:${EMAIL}`}>Email</a></li>
+        </ul>
+      </nav>
+
+      <div class="site-footer__row site-footer__prefs">
+        <div class="cluster">
+          <MotionToggle />
+          <ThemeToggle variant="text" />
+        </div>
+        <span class="site-footer__version">{SITE_VERSION}</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: var(--sp-9);
+    padding-block: var(--sp-8) var(--sp-6);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+  }
+  .site-footer__availability {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    max-width: none;
+    padding-bottom: var(--sp-7);
+    /* static mono line (4.4 #17): mono-s is the only uppercase type */
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    font-weight: 500;
+    letter-spacing: .06em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+  .site-footer__availability .status-dot { width: 8px; height: 8px; }
+  .site-footer__index ul { --cluster: var(--sp-2) var(--sp-5); }
+  .site-footer__n { color: var(--ink-3); margin-right: 4px; }
+
+  .site-footer__rows { border-top: 1px solid var(--rule); }
+  .site-footer__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3) var(--sp-5);
+    padding-block: var(--sp-4);
+    border-bottom: 1px solid var(--rule);
+  }
+  .site-footer__links ul { --cluster: var(--sp-2) var(--sp-5); }
+  .site-footer a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    text-decoration-color: transparent;
+  }
+  .site-footer a:hover { text-decoration-color: currentColor; color: var(--signal-text); }
+  .site-footer__copy, .site-footer__version { color: var(--ink-3); }
+  .site-footer__prefs .cluster { --cluster: var(--sp-5); }
+</style>

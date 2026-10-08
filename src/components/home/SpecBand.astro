@@ -1,0 +1,85 @@
+---
+/**
+ * Spec band (plan 5.3, 4.4 #5): five framed mono cells under the hero.
+ * Facts only: Shikenso and Freiburg (audit), focus areas and stack from his
+ * repos, apps by their confirmed status (Flatsnap "Android" until a Play URL is
+ * confirmed; SteuerApp "In development"). No job title until he supplies it.
+ */
+import { EMAIL, SOCIALS } from '../../site.config';
+---
+
+<div class="wrap">
+  <dl class="cells spec" data-reveal-stagger style="--cells:5">
+    <div class="spec__cell">
+      <dt class="t-label">Now</dt>
+      <dd>
+        <span>Shikenso</span>
+        <span>Uni Freiburg</span>
+        <span class="c-ink-2">Freiburg, DE</span>
+      </dd>
+    </div>
+    <div class="spec__cell">
+      <dt class="t-label">Focus</dt>
+      <dd>
+        <span>CV on video</span>
+        <span>On-device apps</span>
+        <span>Simulation</span>
+        <span>Biosignals</span>
+      </dd>
+    </div>
+    <div class="spec__cell">
+      <dt class="t-label">Stack</dt>
+      <dd>
+        <span>Python</span>
+        <span>PyTorch · CUDA</span>
+        <span>Kotlin · C++</span>
+        <span>SQL</span>
+      </dd>
+    </div>
+    <div class="spec__cell">
+      <dt class="t-label">Apps</dt>
+      <dd>
+        <span><span class="status-dot" aria-hidden="true"></span> Flatsnap</span>
+        <span class="c-ink-2">Android</span>
+        <span><span class="status-dot status-dot--hollow" aria-hidden="true"></span> SteuerApp</span>
+        <span class="c-ink-2">In development</span>
+      </dd>
+    </div>
+    <div class="spec__cell spec__cell--connect">
+      <dt class="t-label">Connect</dt>
+      <dd>
+        <a href={SOCIALS.github.url} rel="me noopener">GitHub ↗</a>
+        <a href={SOCIALS.linkedin.url} rel="me noopener">LinkedIn ↗</a>
+        <a href={`mailto:${EMAIL}`}>Email</a>
+      </dd>
+    </div>
+  </dl>
+</div>
+
+<style>
+  .spec { margin: 0; }
+  .spec__cell { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .spec dd {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    line-height: 1.5;
+  }
+  .spec dd > span { display: inline-flex; align-items: center; gap: var(--sp-2); }
+  .spec a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    width: fit-content;
+    text-decoration-color: transparent;
+  }
+  .spec a:hover { color: var(--signal-text); text-decoration-color: currentColor; }
+  /* 2 columns on mobile (5.3): the fifth cell spans the row */
+  @media (max-width: 1023px) {
+    .spec__cell--connect { grid-column: 1 / -1; }
+    .spec__cell--connect dd { flex-direction: row; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); }
+  }
+</style>
