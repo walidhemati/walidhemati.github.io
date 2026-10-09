@@ -38,8 +38,8 @@ export const SOCIALS = {
   github: { label: 'GitHub', handle: 'walidhemati', url: 'https://github.com/walidhemati' },
   linkedin: {
     label: 'LinkedIn',
-    handle: 'walid-abdul-hakim-5a6957235',
-    url: 'https://www.linkedin.com/in/walid-abdul-hakim-5a6957235/',
+    handle: 'walid-hemati-5a6957235',
+    url: 'https://www.linkedin.com/in/walid-hemati-5a6957235/',
   },
 } as const;
 
