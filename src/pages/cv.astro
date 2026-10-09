@@ -4,8 +4,9 @@
  * public/personal/CV.pdf are generated FROM this page by scripts/cv-pdf.mjs.
  *
  * PRIVACY: no phone, WhatsApp, date of birth, nationality or address. Ever.
- * HONESTY: dates only where the CV states them; no job title for Shikenso
- * until Walid supplies it; project years are not shown (unconfirmed).
+ * HONESTY: dates only where the CV or git history states them; project years
+ * are not shown (unconfirmed). Public-safe: no platform, broadcaster or
+ * customer names (those live in his private CV at ~/Documents/CV).
  */
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
@@ -14,33 +15,51 @@ import { getWork, STATUS_LABEL } from '../lib/work';
 import { personSchema } from '../lib/schema';
 
 const { featured, also } = await getWork();
-const projects = [...featured, ...also].filter((w) => !w.data.needsSignoff);
+const projects = [...featured, ...also].filter((w) => !w.data.needsSignoff && w.id !== 'shikenso');
 const host = SITE_URL.replace(/^https?:\/\//, '');
 
 const experience = [
-  { when: 'Current', org: 'Shikenso', place: '', role: 'Senior Developer & Data Analyst', text: 'Computer vision on broadcast and streamed video.' },
+  {
+    when: '09/2024 – now',
+    org: 'Shikenso',
+    place: '',
+    role: 'Senior Developer & Data Analyst',
+    text: 'Sponsorship analytics: computer vision on broadcast and streamed sports video.',
+    bullets: [
+      'Brought YOLOv8 into the production detection pipeline: wrote the tracker for box and polygon (segmentation) models, integrated and tested it. Detection got roughly 2× faster, and it is still the base of today’s detector.',
+      'Built training and evaluation data for the logo-detection models: VIA-to-YOLO polygon conversion, annotated evaluation sets, annotation QA tools.',
+      'Designed and built a live-TV recording system from the first commit: about 50 channels in three countries, rolling 30-minute segments, multi-source failover, EPG tagging, a FastAPI scheduler and about 900 tests.',
+      'Built 30+ capture integrations for broadcasters, streaming services and sports platforms across Europe, Australia and the Middle East.',
+      'Created a TV-ratings platform for 10 audience-measurement sources, and rebuilt a panel-audience service to run about 22× faster.',
+      'Run 36 scheduled capture services in production with Jenkins CI/CD, systemd, Kubernetes/Helm and Sentry, with regression tests for every incident fix.',
+    ],
+  },
   {
     when: '07/2021 – 09/2021',
     org: 'Miss Diamond',
     place: 'Istanbul',
     role: 'Web developer intern',
     text: 'Developed the company website; maintained its computers and website.',
+    bullets: [] as string[],
   },
 ];
 const education = [
-  { when: '07/2019 – 07/2023', org: 'Istanbul Kültür University', place: 'Istanbul', what: 'B.Sc. Computer Engineering' },
+  { when: '07/2019 – 07/2023', org: 'Istanbul Kültür University', place: 'Istanbul', what: 'B.Sc. Computer Engineering, with Honors' },
   { when: '2017 – 2019', org: 'Beşir Balcıoğlu Anadolu Lisesi', place: 'Istanbul', what: 'High school' },
   { when: '2008 – 2017', org: 'Sharjah Indian School', place: 'Sharjah, UAE', what: 'School' },
 ];
 const skills = [
-  { k: 'Daily', v: 'Python · PyTorch · computer vision on video · Git' },
-  { k: 'Comfortable', v: 'Kotlin / Android · C++ (Eigen, Meson, gtest) · CUDA via PyTorch · MATLAB · SQL' },
-  { k: 'Have used', v: 'C · Java · C# · Flutter / Dart · JavaScript · Solidity / Truffle' },
+  { k: 'Languages', v: 'Python · Kotlin · TypeScript / JavaScript · C++ · SQL' },
+  { k: 'Backend & data', v: 'FastAPI · Pydantic · MongoDB · PostgreSQL · pandas / NumPy' },
+  { k: 'Video', v: 'ffmpeg (HLS, MPEG-TS) · yt-dlp · streamlink · Playwright · EPG data' },
+  { k: 'ML & vision', v: 'PyTorch · YOLOv8 (Ultralytics) · OpenCV · ML Kit · Transformers · CUDA' },
+  { k: 'DevOps', v: 'Jenkins · Docker / Podman · Kubernetes / Helm · systemd · Sentry · Git' },
+  { k: 'Mobile', v: 'Android · Jetpack Compose · Room / SQLCipher · on-device ML' },
 ];
 const languages = 'Dari (native) · English (C1) · Persian (B2 listening, B1 spoken) · Turkish (B1) · Urdu / Hindi (B1 spoken) · Arabic (A1–A2)';
 ---
 
-<Base title={`CV: ${NAME}`} description={`CV of ${NAME}, ${ROLE} at Shikenso: computer vision, Android, scientific computing.`} jsonLd={personSchema()}>
+<Base title={`CV: ${NAME}`} description={`CV of ${NAME}, ${ROLE} at Shikenso: video data pipelines, computer vision (YOLOv8), Android.`} jsonLd={personSchema()}>
   <article class="cv wrap">
     <header class="cv-head">
       <p class="t-label cv-head__k">Curriculum vitae</p>
@@ -63,9 +82,9 @@ const languages = 'Dari (native) · English (C1) · Persian (B2 listening, B1 sp
       <h2 id="cv-profile" class="cv-sec__h t-label">Profile</h2>
       <div class="cv-sec__body">
         <p class="cv-profile">
-          Senior developer and data analyst at Shikenso, working on computer vision for broadcast and streamed video. I build Android apps
-          that keep data on the device, and write scientific code in Python and C++. B.Sc. in Computer Engineering from Istanbul Kültür
-          University.
+          Software engineer for video data pipelines and computer vision. At Shikenso I brought YOLOv8 into the detection pipeline, built a
+          live-TV recording system from scratch and 30+ broadcaster integrations, and run the services behind them in production. I also
+          build privacy-first Android apps and GPU scientific code. B.Sc. in Computer Engineering with Honors, Istanbul Kültür University.
         </p>
       </div>
     </section>
@@ -84,6 +103,11 @@ const languages = 'Dari (native) · English (C1) · Persian (B2 listening, B1 sp
                   {e.place && <span class="cv-entry__place">, {e.place}</span>}
                 </h3>
                 <p>{e.text}</p>
+                {e.bullets && e.bullets.length > 0 && (
+                  <ul class="cv-bullets" role="list">
+                    {e.bullets.map((b) => <li>{b}</li>)}
+                  </ul>
+                )}
               </div>
             </li>
           ))
@@ -208,6 +232,9 @@ const languages = 'Dari (native) · English (C1) · Persian (B2 listening, B1 sp
   .cv-entry__title a { text-decoration-color: var(--rule-ui); }
   .cv-entry__place { font-weight: 400; color: var(--ink-2); }
   .cv-entry__stack { color: var(--ink-3); }
+  .cv-bullets { list-style: none; margin: var(--sp-2) 0 0; padding: 0; display: grid; gap: var(--sp-2); }
+  .cv-bullets li { position: relative; padding-left: 1.1em; max-width: 70ch; }
+  .cv-bullets li::before { content: ''; position: absolute; left: 0; top: .72em; width: .55em; height: 1px; background: var(--signal-text); }
 
   @media (min-width: 640px) {
     .cv-sec { grid-template-columns: 9rem 1fr; column-gap: var(--gutter); }
@@ -253,6 +280,9 @@ const languages = 'Dari (native) · English (C1) · Persian (B2 listening, B1 sp
     .cv-entry__title { font-size: 10pt; }
     .cv-entry__main p { font-size: 9.5pt; }
     .cv-entry__stack { font-size: 8pt !important; }
+    .cv-bullets { gap: 1mm; margin-top: 1mm; }
+    .cv-bullets li { font-size: 9pt; }
+    .cv-bullets li::before { background: #000; }
     .cv-foot { display: flex; justify-content: space-between; margin-top: 5mm; font-size: 7.5pt; }
     .print-url a[href^="http"]::after { content: none; }
   }

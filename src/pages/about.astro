@@ -19,16 +19,16 @@ import { CV_PAGE, EMAIL, NAME, SOCIALS } from '../site.config';
 import { personSchema } from '../lib/schema';
 
 const timeline = [
-  { when: 'Now', what: 'Senior Developer & Data Analyst', where: 'Shikenso', now: true },
-  { when: '2019–2023', what: 'B.Sc. Computer Engineering', where: 'Istanbul Kültür University' },
+  { when: '2024–now', what: 'Senior Developer & Data Analyst', where: 'Shikenso', now: true },
+  { when: '2019–2023', what: 'B.Sc. Computer Engineering, with Honors', where: 'Istanbul Kültür University' },
   { when: '07–09/2021', what: 'Web developer intern', where: 'Miss Diamond, Istanbul' },
   { when: '2017–2019', what: 'High school', where: 'Beşir Balcıoğlu Anadolu Lisesi, Istanbul' },
   { when: '2008–2017', what: 'School', where: 'Sharjah Indian School, UAE' },
 ];
 
 const toolkit = [
-  { depth: 'Daily', items: ['Python', 'PyTorch', 'Computer vision on video', 'Git'] },
-  { depth: 'Comfortable', items: ['Kotlin / Android', 'C++ (Eigen, Meson, gtest)', 'CUDA via PyTorch', 'MATLAB', 'SQL'] },
+  { depth: 'Daily', items: ['Python', 'FastAPI', 'MongoDB', 'ffmpeg', 'YOLOv8 / PyTorch', 'Jenkins', 'Sentry', 'Git'] },
+  { depth: 'Comfortable', items: ['Kotlin / Android', 'Kubernetes / Helm', 'Playwright', 'C++ (Eigen, Meson, gtest)', 'CUDA via PyTorch', 'MATLAB', 'SQL'] },
   { depth: 'Have used', items: ['C', 'Java', 'C#', 'Flutter / Dart', 'JavaScript', 'Solidity / Truffle'] },
 ];
 
@@ -44,7 +44,7 @@ const languages = [
 
 <Base
   title={`About: ${NAME}`}
-  description="Walid Hemati is a senior developer and data analyst at Shikenso: computer vision on video, privacy-first Android apps, scientific computing."
+  description="Walid Hemati is a senior developer and data analyst at Shikenso: video data pipelines, computer vision (YOLOv8), privacy-first Android apps, scientific computing."
   ogType="profile"
   jsonLd={personSchema()}
 >
@@ -76,7 +76,7 @@ const languages = [
 
       <div class="ab-bio__panel ab-bio__panel--short" data-panel="short">
         <p class="ab-bio__big">
-          I'm Walid, a senior developer and data analyst at Shikenso, where I work on computer vision for broadcast and streamed video. I build
+          I'm Walid, a senior developer and data analyst at Shikenso, where I build the video pipelines and computer vision behind sponsorship analytics. I build
           Android apps that keep your data <span class="t-accent">on the device</span>, and write scientific code in Python and C++.
         </p>
       </div>
@@ -94,13 +94,15 @@ const languages = [
           </p>
           <p>
             <span class="ab-story__n t-label">02</span>
-            I studied Computer Engineering at Istanbul Kültür University from 2019 to 2023. By graduation my projects included a
+            I studied Computer Engineering at Istanbul Kültür University from 2019 to 2023 and graduated with honors. By graduation my projects included a
             variational autoencoder that decodes emotion from EEG, a review paper on machine-learning-based Android malware detection,
             and a summer as a web developer intern at Miss Diamond in 2021.
           </p>
           <p>
             <span class="ab-story__n t-label">03</span>
-            Today I'm a senior developer and data analyst at Shikenso, working on computer vision for broadcast and streamed video. My own projects include <a href="/work/pylbm/">pylbm</a>, a GPU Lattice-Boltzmann
+            I joined Shikenso in 2024, where I brought YOLOv8 into the detection pipeline and then built much of the capture layer that feeds it:
+            a live-TV recording system written from scratch, 30+ broadcaster integrations, and the audience-data services alongside them
+            (<a href="/work/shikenso/">more here</a>). My own projects include <a href="/work/pylbm/">pylbm</a>, a GPU Lattice-Boltzmann
             solver; <a href="/work/steuerapp/">SteuerApp</a>, an offline tax recorder for Android; and{' '}
             <a href="/work/flatsnap/">Flatsnap</a>, an on-device document scanner.
           </p>

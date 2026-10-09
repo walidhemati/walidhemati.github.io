@@ -1,21 +1,87 @@
 ---
 n: 1
 title: Shikenso
-line: Computer vision on broadcast and streamed video at Shikenso.
-discipline: Computer vision · Video
+line: Capture, detection and audience data for sponsorship analytics. YOLOv8 in the detection pipeline, a live-TV recorder built from scratch, and 30+ broadcaster integrations.
+discipline: Computer vision · Video pipelines
 domain: [ml-cv]
+year: 2024
+yearConfirmed: true
 ongoing: true
-yearConfirmed: false
+role: Senior Developer & Data Analyst
 status: current
-stack: []
+stack: [Python, YOLOv8 / Ultralytics, PyTorch, FastAPI, MongoDB, ffmpeg, Playwright, Jenkins, Kubernetes / Helm, Sentry]
 featured: true
-needsSignoff: true
-fallback: Computer vision on broadcast and streamed video at Shikenso.
-description: Walid Hemati works on computer vision for broadcast and streamed video at Shikenso.
+metrics:
+  - label: Detection speed after the YOLOv8 switch
+    after: "~2×"
+    source: "Own estimate from the switch"
+    verified: true
+  - label: Broadcaster and streaming integrations built
+    after: "30+"
+    source: "Shikenso code base (private)"
+    verified: true
+  - label: Live channels in the IPTV recorder
+    after: "~50"
+    source: "Recorder channel list (private)"
+    verified: true
+  - label: Automated tests in the recorder
+    after: "~900"
+    source: "Recorder test suite (private)"
+    verified: true
+description: Walid Hemati is a senior developer and data analyst at Shikenso. He brought YOLOv8 into the detection pipeline, built a live-TV recording system from scratch and 30+ broadcaster integrations, and runs the services behind them.
 todo:
-  - Job title and start month/year (Walid).
-  - Pipeline step names and any metrics only after manager sign-off. Until then only the fallback line renders.
   - Synthetic visuals only; no customer names, logos or frames.
+  - Platform and broadcaster names stay off the public page; they live in the private CV only.
 ---
+import TLDR from '../../components/content/TLDR.astro';
+import Decision from '../../components/content/Decision.astro';
+import Results from '../../components/content/Results.astro';
+import FlowDiagram from '../../components/content/FlowDiagram.astro';
 
-Computer vision on broadcast and streamed video at Shikenso.
+<TLDR
+  problem="Sponsors want to know how often, how long and how big their brand was on screen, across broadcasts and streams in many countries."
+  approach="Record the video reliably, detect the brands in it with computer vision, and attach the audience figures that turn screen time into reach."
+  result="I work across that chain: YOLOv8 in the detector, the capture layer that feeds it, and the services that bring in TV-ratings data."
+/>
+
+## The job
+
+<p class="lede">You can only measure what you managed to record.</p>
+
+Shikenso measures brand exposure in sports broadcasts and live streams. I joined in September 2024 on the computer-vision side, and since 2025 most of my work has been the systems around the detector: getting the video in, keeping the recording services alive, and joining the results with audience numbers.
+
+<FlowDiagram
+  fig="FIG. 02"
+  caption="The pipeline at the level I can describe publicly. I work on the capture, detection and audience steps."
+  steps={[
+    { label: 'Capture', sub: 'broadcasts,\nstreams, live TV' },
+    { label: 'Detect', sub: 'YOLOv8\nbox + polygon' },
+    { label: 'Measure', sub: 'screen time,\nsize, position' },
+    { label: 'Reach', sub: 'TV-ratings\ndata' },
+  ]}
+/>
+
+## What I built
+
+- **YOLOv8 in production.** I wrote the YOLOv8 tracker for box and polygon (segmentation) models, plugged it into batch processing and covered it with tests. Detection got roughly twice as fast, and that tracker is still the base of the detector today. I also built training and evaluation data for the logo models: VIA-to-YOLO polygon conversion, annotated evaluation sets and annotation QA tools.
+- **A live-TV recording system, from the first commit.** About 50 channels in three countries, recorded in rolling 30-minute segments, with automatic failover between sources, programme tagging from the EPG guide, ffmpeg repair and joining, and a FastAPI scheduler with a web UI. It has a suite of about 900 tests.
+- **30+ capture integrations** for broadcasters, streaming services and sports platforms across Europe, Australia and the Middle East. They feed the detector.
+- **Audience data.** A TV-ratings platform that brings 10 audience-measurement sources from three countries into one place, and a rebuilt panel-audience service that runs about 22× faster.
+- **Running it.** 36 scheduled capture services in production through Jenkins and systemd, containers on Kubernetes with Helm, Sentry for incidents, and regression tests for every fix.
+
+## Decisions
+
+<div class="decisions">
+  <Decision chose="Fixed 30-minute segments" over="one long file per broadcast">
+    A failed source costs one segment, not the whole match, and segments can be repaired and joined after the fact.
+  </Decision>
+  <Decision chose="Failover across sources" over="trusting a single feed">
+    Live feeds drop without warning. Switching to the next working source keeps the recording going, and the test suite checks that switching.
+  </Decision>
+</div>
+
+## Results
+
+<Results metrics={frontmatter.metrics}>
+  Numbers come from the repositories I work in, except the detection speed-up, which is my own estimate from the time of the switch.
+</Results>

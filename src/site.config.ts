@@ -21,7 +21,7 @@ export const ROLE = 'Senior Developer & Data Analyst';
 export const POSITIONING = 'Senior Developer & Data Analyst at Shikenso';
 export const DEFAULT_TITLE = `${NAME}: ${POSITIONING}`;
 export const DEFAULT_DESCRIPTION =
-  'Walid Hemati is a senior developer and data analyst at Shikenso: computer vision on broadcast and streamed video, privacy-first Android apps, and scientific computing in Python and C++.';
+  'Walid Hemati is a senior developer and data analyst at Shikenso: video data pipelines and computer vision (YOLOv8) on broadcast and streamed video, privacy-first Android apps, and scientific computing in Python and C++.';
 
 /** Footer status line (4.4 #17). */
 export const AVAILABILITY = 'Senior Developer & Data Analyst · Shikenso';
