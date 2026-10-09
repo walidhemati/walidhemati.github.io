@@ -110,7 +110,7 @@ h1, h2, h3, h4 {
   color: var(--ink-3);
 }
 
-/* Serif italic accent: "on the device", "in production", "Freiburg" */
+/* Serif italic accent: "on the device", "in production" */
 .t-accent, em.accent {
   font-family: var(--font-serif);
   font-style: italic;

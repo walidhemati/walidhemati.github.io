@@ -14,12 +14,9 @@ export function personSchema() {
     name: NAME,
     url: `${SITE_URL}/`,
     email: `mailto:${EMAIL}`,
-    // No jobTitle: next to worksFor it would read as his Shikenso title, which
-    // is unconfirmed. Add it back only once Walid confirms the title.
+    jobTitle: 'Senior Developer & Data Analyst',
     worksFor: { '@type': 'Organization', name: 'Shikenso' },
     alumniOf: { '@type': 'CollegeOrUniversity', name: 'Istanbul Kültür University' },
-    affiliation: { '@type': 'CollegeOrUniversity', name: 'University of Freiburg' },
-    address: { '@type': 'PostalAddress', addressLocality: 'Freiburg', addressCountry: 'DE' },
     knowsAbout: ['Computer vision', 'Machine learning', 'Android development', 'Scientific computing', 'PyTorch', 'Kotlin', 'C++'],
     sameAs: [SOCIALS.github.url, SOCIALS.linkedin.url],
   };

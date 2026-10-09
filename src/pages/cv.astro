@@ -18,7 +18,7 @@ const projects = [...featured, ...also].filter((w) => !w.data.needsSignoff);
 const host = SITE_URL.replace(/^https?:\/\//, '');
 
 const experience = [
-  { when: 'Current', org: 'Shikenso', place: 'Freiburg', role: null, text: 'Computer vision on broadcast and streamed video.' },
+  { when: 'Current', org: 'Shikenso', place: '', role: 'Senior Developer & Data Analyst', text: 'Computer vision on broadcast and streamed video.' },
   {
     when: '07/2021 – 09/2021',
     org: 'Miss Diamond',
@@ -28,7 +28,6 @@ const experience = [
   },
 ];
 const education = [
-  { when: 'Current', org: 'University of Freiburg', place: 'Freiburg', what: 'Student' },
   { when: '07/2019 – 07/2023', org: 'Istanbul Kültür University', place: 'Istanbul', what: 'B.Sc. Computer Engineering' },
   { when: '2017 – 2019', org: 'Beşir Balcıoğlu Anadolu Lisesi', place: 'Istanbul', what: 'High school' },
   { when: '2008 – 2017', org: 'Sharjah Indian School', place: 'Sharjah, UAE', what: 'School' },
@@ -41,12 +40,12 @@ const skills = [
 const languages = 'Dari (native) · English (C1) · Persian (B2 listening, B1 spoken) · Turkish (B1) · Urdu / Hindi (B1 spoken) · Arabic (A1–A2)';
 ---
 
-<Base title={`CV: ${NAME}`} description={`CV of ${NAME}, ${ROLE} in Freiburg: computer vision, Android, scientific computing.`} jsonLd={personSchema()}>
+<Base title={`CV: ${NAME}`} description={`CV of ${NAME}, ${ROLE} at Shikenso: computer vision, Android, scientific computing.`} jsonLd={personSchema()}>
   <article class="cv wrap">
     <header class="cv-head">
       <p class="t-label cv-head__k">Curriculum vitae</p>
       <h1 class="cv-name">{NAME}</h1>
-      <p class="cv-role">{ROLE} <span class="c-ink-3">·</span> Computer vision, Android <span class="c-ink-3">·</span> Freiburg</p>
+      <p class="cv-role">{ROLE} <span class="c-ink-3">·</span> Shikenso</p>
       <ul class="cv-contact t-mono" role="list">
         <li><a href={`mailto:${EMAIL}`}>{EMAIL}</a></li>
         <li><a href={SOCIALS.github.url}>github.com/{SOCIALS.github.handle}</a></li>
@@ -64,9 +63,9 @@ const languages = 'Dari (native) · English (C1) · Persian (B2 listening, B1 sp
       <h2 id="cv-profile" class="cv-sec__h t-label">Profile</h2>
       <div class="cv-sec__body">
         <p class="cv-profile">
-          ML and software engineer. I work on computer vision for broadcast and streamed video at Shikenso in Freiburg, build Android apps
+          Senior developer and data analyst at Shikenso, working on computer vision for broadcast and streamed video. I build Android apps
           that keep data on the device, and write scientific code in Python and C++. B.Sc. in Computer Engineering from Istanbul Kültür
-          University; studying at the University of Freiburg.
+          University.
         </p>
       </div>
     </section>
@@ -82,7 +81,7 @@ const languages = 'Dari (native) · English (C1) · Persian (B2 listening, B1 sp
                 <h3 class="cv-entry__title">
                   {e.role ? `${e.role}, ` : ''}
                   {e.org}
-                  <span class="cv-entry__place">, {e.place}</span>
+                  {e.place && <span class="cv-entry__place">, {e.place}</span>}
                 </h3>
                 <p>{e.text}</p>
               </div>

@@ -1,6 +1,6 @@
 ---
 /**
- * About (plan 5.5). Origin option B: "Engineer, now in Freiburg." No origin route.
+ * About (plan 5.5). Heading: role at Shikenso. No origin route.
  *  - Short | Long bio toggle (aria-pressed). No JS: the long bio shows and the
  *    toggle is hidden; with JS the short bio is the default. The swap is CSS on
  *    a data attribute set before paint, so there is no layout shift.
@@ -19,8 +19,7 @@ import { CV_PAGE, EMAIL, NAME, SOCIALS } from '../site.config';
 import { personSchema } from '../lib/schema';
 
 const timeline = [
-  { when: 'Now', what: 'Computer vision on broadcast and streamed video', where: 'Shikenso, Freiburg', now: true },
-  { when: 'Now', what: 'Student', where: 'University of Freiburg', now: true },
+  { when: 'Now', what: 'Senior Developer & Data Analyst', where: 'Shikenso', now: true },
   { when: '2019–2023', what: 'B.Sc. Computer Engineering', where: 'Istanbul Kültür University' },
   { when: '07–09/2021', what: 'Web developer intern', where: 'Miss Diamond, Istanbul' },
   { when: '2017–2019', what: 'High school', where: 'Beşir Balcıoğlu Anadolu Lisesi, Istanbul' },
@@ -45,13 +44,13 @@ const languages = [
 
 <Base
   title={`About: ${NAME}`}
-  description="Walid Hemati is an ML and software engineer in Freiburg: computer vision at Shikenso, privacy-first Android apps, scientific computing."
+  description="Walid Hemati is a senior developer and data analyst at Shikenso: computer vision on video, privacy-first Android apps, scientific computing."
   ogType="profile"
   jsonLd={personSchema()}
 >
   <section class="ab-hero wrap grid">
     <p class="col-label t-label ab-hero__label">[ 02 ] About</p>
-    <h1 class="ab-title">Engineer, now in <span class="t-accent">Freiburg</span>.</h1>
+    <h1 class="ab-title">Senior developer &amp; data analyst at <span class="t-accent">Shikenso</span>.</h1>
   </section>
 
   <section class="ab-intro wrap grid" aria-label="Bio">
@@ -77,14 +76,14 @@ const languages = [
 
       <div class="ab-bio__panel ab-bio__panel--short" data-panel="short">
         <p class="ab-bio__big">
-          I'm Walid, an ML and software engineer in Freiburg. I work on computer vision for broadcast and streamed video at Shikenso, build
+          I'm Walid, a senior developer and data analyst at Shikenso, where I work on computer vision for broadcast and streamed video. I build
           Android apps that keep your data <span class="t-accent">on the device</span>, and write scientific code in Python and C++.
         </p>
       </div>
 
       <div class="ab-bio__panel ab-bio__panel--long" data-panel="long">
         <p class="ab-bio__big">
-          I'm Walid, an ML and software engineer in Freiburg. I like work where the result can be checked: a detection that holds up on
+          I'm Walid, a senior developer and data analyst at Shikenso. I like work where the result can be checked: a detection that holds up on
           real footage, a solver that matches the benchmark, an app that does what its privacy policy says.
         </p>
         <div class="ab-story">
@@ -101,8 +100,7 @@ const languages = [
           </p>
           <p>
             <span class="ab-story__n t-label">03</span>
-            Now I'm in Freiburg. I study at the University of Freiburg and work at Shikenso, where I do computer vision on broadcast and
-            streamed video. My own projects include <a href="/work/pylbm/">pylbm</a>, a GPU Lattice-Boltzmann
+            Today I'm a senior developer and data analyst at Shikenso, working on computer vision for broadcast and streamed video. My own projects include <a href="/work/pylbm/">pylbm</a>, a GPU Lattice-Boltzmann
             solver; <a href="/work/steuerapp/">SteuerApp</a>, an offline tax recorder for Android; and{' '}
             <a href="/work/flatsnap/">Flatsnap</a>, an on-device document scanner.
           </p>

@@ -6,7 +6,7 @@
  *    the inline prefs script when the hero font is ready within ~100ms).
  *  - Status pill + lead + CTAs (View work, CV, Copy email).
  *  - Detection pass: one bracket box hops across the <span data-detect> targets
- *    (cv → android → loc) and rests on the status pill. The box is aria-hidden;
+ *    (cv → shikenso → android) and rests on the status pill. The box is aria-hidden;
  *    with no JS or reduced motion the pill simply carries static brackets.
  */
 import Brackets from '../Brackets.astro';
@@ -23,8 +23,8 @@ const cvIsPdf = Boolean(CV_PDF);
 
     <div class="hero__top">
       <p class="t-label hero__role">
-        <span class="sr-only">ML &amp; software engineer</span>
-        <span class="split-host" data-split-lines aria-hidden="true">ML &amp; software engineer</span>
+        <span class="sr-only">Senior developer &amp; data analyst</span>
+        <span class="split-host" data-split-lines aria-hidden="true">Senior developer &amp; data analyst</span>
       </p>
       <p class="t-label hero__fields" aria-hidden="true">Computer vision · Android · Scientific computing</p>
     </div>
@@ -52,9 +52,9 @@ const cvIsPdf = Boolean(CV_PDF);
       <div class="hero__copy">
         <p class="t-lead hero__lead">
           <!-- SplitText runs with aria:'none' on the aria-hidden copy; screen readers get this one -->
-          <span class="sr-only">Computer vision on broadcast and streamed video at Shikenso, Android apps that keep your data on the device, and scientific computing in Python and C++. Based in Freiburg.</span>
+          <span class="sr-only">Computer vision on broadcast and streamed video at Shikenso, Android apps that keep your data on the device, and scientific computing in Python and C++.</span>
           <!-- kept on ONE source line: SplitText drops newline-only whitespace before nested elements -->
-          <span class="split-host" data-split-lines aria-hidden="true"><span data-detect="cv">Computer vision</span> on broadcast and streamed video at Shikenso, <span data-detect="android">Android</span> apps that keep your data <em class="t-accent">on the device</em>, and scientific computing in Python and C++. Based in <span data-detect="loc">Freiburg</span>.</span>
+          <span class="split-host" data-split-lines aria-hidden="true"><span data-detect="cv">Computer vision</span> on broadcast and streamed video at <span data-detect="shikenso">Shikenso</span>, <span data-detect="android">Android</span> apps that keep your data <em class="t-accent">on the device</em>, and scientific computing in Python and C++.</span>
         </p>
 
         <div class="cluster hero__ctas">

@@ -7,7 +7,7 @@
  *                onSplit}. Runs once per page load.
  *  detection()   the signature detection pass: one bracket box (corners only)
  *                snaps onto "Computer vision" (cv), "Android" (android),
- *                "Freiburg" (loc) and rests on the status pill, while the
+ *                "Shikenso" (shikenso) and rests on the status pill, while the
  *                [ Status ] label above the pill reads out "Detect · <key>"
  *                (the box never covers the text around it). ~3.2s, plays
  *                once, ⟲ Replay. Positions come from element rects and are
@@ -58,7 +58,7 @@ export function detection(hero: HTMLElement, { delay = 1.25 }: { delay?: number 
   const replay = hero.querySelector<HTMLButtonElement>('[data-detect-replay]');
   if (!box || !label) return () => {};
   const corners = Array.from(box.querySelectorAll<HTMLElement>('.detect__c'));
-  const ORDER = ['cv', 'android', 'loc', 'status'] as const;
+  const ORDER = ['cv', 'shikenso', 'android', 'status'] as const;
   const C = 12;
 
   // Re-query every time: SplitText re-creates nested spans on re-split.

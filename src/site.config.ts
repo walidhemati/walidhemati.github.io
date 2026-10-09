@@ -17,18 +17,16 @@ export const NAME_LINES = ['Walid', 'Hemati'] as const;
 /** The ONE email constant. Used for mailto, copy-to-clipboard, JSON-LD, legal pages. */
 export const EMAIL = 'walidhemati@gmail.com';
 
-export const ROLE = 'ML & Software Engineer';
-export const POSITIONING = 'ML & Software Engineer (Computer Vision, Android)';
+export const ROLE = 'Senior Developer & Data Analyst';
+export const POSITIONING = 'Senior Developer & Data Analyst at Shikenso';
 export const DEFAULT_TITLE = `${NAME}: ${POSITIONING}`;
 export const DEFAULT_DESCRIPTION =
-  'Walid Hemati is an ML and software engineer in Freiburg: computer vision on broadcast and streamed video at Shikenso, privacy-first Android apps, and scientific computing in Python and C++.';
+  'Walid Hemati is a senior developer and data analyst at Shikenso: computer vision on broadcast and streamed video, privacy-first Android apps, and scientific computing in Python and C++.';
 
-export const LOCATION = 'Freiburg';
-
-/** Footer availability line (4.4 #17). Wording pending his confirmation. */
-export const AVAILABILITY = 'Open to ML / SWE roles · Freiburg / remote EU';
+/** Footer status line (4.4 #17). */
+export const AVAILABILITY = 'Senior Developer & Data Analyst · Shikenso';
 /** Short form for the one-line hero pill (columns 1–3). Same pending wording. */
-export const AVAILABILITY_SHORT = 'Open to ML / SWE · Freiburg / EU';
+export const AVAILABILITY_SHORT = 'Senior Dev · Data Analyst';
 
 /**
  * Impressum address (§ 5 DDG). Leave EMPTY until Walid supplies a c/o service
