@@ -64,10 +64,14 @@ export const NAV: readonly NavItem[] = [
   { n: '04', label: 'Contact', href: '/#contact' },
 ] as const;
 
+/**
+ * The Impressum is hidden until IMPRESSUM_ADDRESS is set. To publish it: fill
+ * the address and rename src/pages/_impressum.astro back to impressum.astro.
+ */
 export const LEGAL_NAV: readonly { label: string; href: string; lang: string }[] = [
-  { label: 'Impressum', href: '/impressum/', lang: 'de' },
+  ...(IMPRESSUM_ADDRESS.trim() ? [{ label: 'Impressum', href: '/impressum/', lang: 'de' }] : []),
   { label: 'Datenschutz', href: '/datenschutz/', lang: 'de' },
-] as const;
+];
 
 /** Site version shown in the footer (lynnandtonic-style versioned site). */
 export const SITE_VERSION = 'v.2026';
