@@ -1,101 +1,83 @@
 ---
-n: 2
 title: pylbm
-line: A GPU Lattice-Boltzmann solver in PyTorch/CUDA for the D2Q9 lid-driven cavity, validated against Ghia et al. (1982).
-discipline: Scientific computing
+line: "Lattice-Boltzmann flow (D2Q9, D3Q19) on the GPU from Python, at the memory roofline and level with FluidX3D on the same GPU."
+discipline: Scientific computing · GPU
 domain: [scientific]
 yearConfirmed: false
 status: open-source
-stack: [Python, PyTorch, CUDA]
+stack: [Python, Triton, NVIDIA Warp, Numba-CUDA, CUDA C, PyTorch]
 links:
   repo: https://github.com/walidhemati/pylbm
+  paper: https://github.com/walidhemati/pylbm/blob/main/paper/paper.pdf
 metrics:
-  - label: Grid
-    after: "512²"
-    source: 'pylbm README: "32MB memory usage for 512² grid (89% of theoretical minimum)"'
+  - label: "D2Q9 fp32 (Numba-CUDA fused)"
+    after: "5,034"
+    unit: "MLUPS"
+    source: "pylbm paper, generated from results/rtx3070-laptop.json: 101 % of measured copy bandwidth"
     verified: true
-  - label: Memory
-    after: "32"
-    unit: MB
-    source: 'pylbm README: "32MB memory usage for 512² grid (89% of theoretical minimum)"'
+  - label: "D2Q9 16-bit storage (CUDA C)"
+    after: "10,096"
+    unit: "MLUPS"
+    source: "pylbm paper, generated from results/rtx3070-laptop.json"
     verified: true
-  - label: Runtime on GPU
-    after: "< 20"
-    unit: min
-    source: 'pylbm README: "<20 minutes runtime for 512² resolution on GPU"'
+  - label: "D3Q19 fp32"
+    after: "2,364"
+    unit: "MLUPS"
+    source: "pylbm paper, generated from results/rtx3070-laptop.json: 100 % of copy bandwidth"
     verified: true
-featured: true
-description: pylbm is a GPU Lattice-Boltzmann solver in PyTorch/CUDA for the D2Q9 lid-driven cavity, validated against Ghia et al. (1982).
-todo:
-  - Start year (repo creation / first commit), confirmed by Walid.
-  - Velocity/vorticity still, a short loop from his own code, centreline CSV against Ghia.
-  - Review the "Decisions" wording; it describes the method's trade-offs, he should confirm they match his reasons.
+  - label: "Speed-up over the original script"
+    after: "22.1"
+    unit: "×"
+    source: "pylbm paper, generated from results/rtx3070-laptop.json: 458 MLUPS original"
+    verified: true
+  - label: "Rate vs FluidX3D, same GPU (D2Q9 / D3Q19)"
+    after: "1.02 / 1.00"
+    unit: "×"
+    source: "pylbm paper, results/counterparts.json"
+    verified: true
+  - label: "Ghia et al. 1982, L2 error (Re 100–1000)"
+    after: "0.24–0.40"
+    unit: "% of lid speed"
+    source: "pylbm paper, results/validation.json"
+    verified: true
+description: "Lattice-Boltzmann flow (D2Q9, D3Q19) on the GPU from Python, at the memory roofline and level with FluidX3D on the same GPU."
 ---
+import { Image } from 'astro:assets';
 import TLDR from '../../components/content/TLDR.astro';
-import Decision from '../../components/content/Decision.astro';
 import Results from '../../components/content/Results.astro';
-import FlowDiagram from '../../components/content/FlowDiagram.astro';
+import fig from '../../assets/work/pylbm/ladder.png';
 
 <TLDR
-  problem="A flow solver is only worth something if it reproduces a known answer. The lid-driven cavity has one."
-  approach="A D2Q9 Lattice-Boltzmann scheme written in PyTorch, so the whole lattice updates on the GPU through CUDA."
-  result="The solver's results are checked against the reference data of Ghia et al. (1982), the standard benchmark for this flow."
+  problem="A flow solver is only worth something if it reproduces known answers, and a GPU code only if it uses the GPU well."
+  approach="D2Q9/D3Q19 with BGK, TRT and MRT; fused stream-collide kernels generated for Triton, Warp and Numba from one description, plus hand-written CUDA C, AA streaming and 16-bit storage."
+  result="Every fused kernel runs at the measured copy bandwidth, as fast as FluidX3D on the same GPU, and the solver matches Ghia et al., Poiseuille, Schäfer–Turek and Taylor–Green references."
 />
 
 ## Problem
 
-<p class="lede">Fluid simulation is easy to make look right and hard to make be right.</p>
-
-A square box of fluid, a lid that slides across the top, three walls that hold still: the lid-driven cavity is about the simplest flow there is, and that is exactly why it matters. Since Ghia, Ghia and Shin published their tables in 1982, it has been the test a new incompressible-flow solver has to pass before anyone trusts it with anything else.
-
-pylbm is a solver built to pass that test, and to do it on a GPU.
-
-## Constraints
-
-- **Correctness first.** The output has to line up with published reference data, not just produce a convincing vortex.
-- **One GPU.** The full lattice and its velocity populations have to live in GPU memory at once.
-- **Two dimensions, nine velocities.** The D2Q9 model: every lattice node carries nine populations, one at rest and eight moving to its neighbours.
-- **Python on the GPU.** Written with PyTorch, which runs the arithmetic on the GPU through CUDA.
+Lattice Boltzmann is bandwidth-bound: a D2Q9 update moves at least 72 bytes. The question is whether Python code can sit on that limit. The project started from an existing PyTorch cavity script, which runs at 9 % of the copy bandwidth and turned out to have three boundary-condition bugs, documented in the paper.
 
 ## Approach
 
-Lattice-Boltzmann does not solve the Navier–Stokes equations directly. It tracks populations of fluid particles on a grid and alternates two simple moves: a **collision**, which relaxes every node towards local equilibrium, and a **stream**, which shifts each population one node along its direction. Walls and the moving lid enter as boundary conditions. Repeat for enough time steps, and the macroscopic flow emerges.
+- An eight-rung ladder from NumPy through PyTorch and `torch.compile` to fused stream–collide kernels.
+- The Triton, Warp and Numba kernels are printed from one symbolic description, so all toolchains execute identical arithmetic.
+- AA-pattern in-place streaming and 16-bit storage of shifted populations halve the memory traffic.
+- Validation: Ghia et al. cavity at Re 100/400/1000, shear-wave viscosity, Poiseuille order 2, Schäfer–Turek cylinder (St 0.2996), 3D Taylor–Green.
 
-Both moves are the same operation applied to every node at once. Written as PyTorch tensor operations, that is exactly the shape of work a GPU is built for.
-
-<FlowDiagram
-  fig="FIG. 02"
-  caption="One simulation, end to end. Collide and stream repeat for every time step; validation compares the result with Ghia et al. (1982)."
-  steps={[
-    { label: 'Grid', sub: 'D2Q9 lattice\nlid + walls' },
-    { label: 'Collide', sub: 'relax to\nequilibrium' },
-    { label: 'Stream', sub: 'shift to\nneighbours' },
-    { label: 'Validate', sub: 'vs. Ghia et al.\n(1982)' },
-  ]}
-  loop={{ from: 2, to: 1, label: 'every time step' }}
-/>
-
-## Decisions
-
-<div class="decisions">
-  <Decision chose="Lattice-Boltzmann" over="a finite-difference Navier–Stokes solver">
-    Every update in LBM is local: a node only needs itself and its eight neighbours. That makes the method naturally parallel, which is the whole point of running it on a GPU.
-  </Decision>
-  <Decision chose="PyTorch" over="a separate GPU code base">
-    Collision and streaming are written as operations on whole tensors, and PyTorch runs them on the GPU through CUDA. The numerics stay in Python, next to the code that sets up and checks the run.
-  </Decision>
-  <Decision chose="The lid-driven cavity" over="a flow without reference data">
-    A benchmark with published numbers turns "looks plausible" into a comparison that can fail. That is the only kind of result worth reporting.
-  </Decision>
-</div>
+<figure class="figure">
+  <Image src={fig} alt="Bar chart of the optimisation ladder in MLUPS: the original script far below the roofline, the fused Triton, Warp, Numba and CUDA C kernels at the dashed fp32 roofline, 16-bit variants at the 16-bit roofline." widths={[720, 1200]} sizes="(max-width: 760px) 100vw, 760px" />
+  <figcaption>The optimisation ladder against the copy-bandwidth roofline (RTX 3070 Laptop GPU).</figcaption>
+</figure>
 
 ## Results
 
 <Results metrics={frontmatter.metrics}>
-  The solver is validated against the benchmark data of Ghia et al. (1982). Grid size, memory footprint and runtime below are quoted from the [README](https://github.com/walidhemati/pylbm).
+  On one RTX 3070 Laptop GPU every fused kernel reaches the measured copy bandwidth. FluidX3D, the hand-optimised OpenCL code, runs at the same rate on the same GPU; the PyTorch framework Lettuce is 3.7× slower with its native kernels. See the [paper](https://github.com/walidhemati/pylbm/blob/main/paper/paper.pdf).
 </Results>
 
 ## What I'd do next
 
-- Put the evidence on this page: velocity profiles along the cavity centrelines plotted over Ghia's points, and a vorticity render from the solver itself.
-- A small, interactive version of the cavity that runs in the browser, with the Reynolds number on a slider.
+- Multi-GPU domain decomposition.
+- Complex geometries with flag fields in the fused kernels.
+
+Part of the [Python-HPC suite](/work/python-hpc/).

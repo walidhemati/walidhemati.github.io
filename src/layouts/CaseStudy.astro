@@ -254,6 +254,20 @@ const ld: Record<string, unknown> | undefined =
     letter-spacing: -0.01em;
     max-width: 36ch;
   }
+  /* Result figures (plots from the papers; white plot background in both themes) */
+  .cs-prose :global(figure.figure) { margin-top: var(--sp-7); }
+  .cs-prose :global(figure.figure img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #fff;
+    border: 1px solid var(--rule-strong);
+  }
+  .cs-prose :global(figure.figure figcaption) {
+    margin-top: var(--sp-3);
+    font-size: var(--fs-small, .875rem);
+    color: var(--ink-3);
+  }
   .cs-prose :global(ul:not([role])) { padding-left: 0; list-style: none; }
   .cs-prose :global(ul:not([role]) > li) {
     position: relative;

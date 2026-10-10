@@ -37,7 +37,7 @@ const delta = (m: Metric) => {
   <div class="results__note"><slot /></div>
   {
     rows.length > 0 && (
-      <div class="results__scroll">
+      <div class="results__scroll" tabindex="0" role="region" aria-label="Results table (scrolls horizontally)">
         <table class="results__table">
           <thead>
             {compare ? (

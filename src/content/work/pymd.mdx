@@ -1,0 +1,78 @@
+---
+title: pymd
+line: "Lennard-Jones and EAM molecular dynamics on the GPU from Python: 1.3× HOOMD-blue and 4.6× LAMMPS on the same GPU, with forces matching my C++ code yamd to 1e-14."
+discipline: Scientific computing · GPU
+domain: [scientific]
+yearConfirmed: true
+year: 2026
+status: open-source
+stack: [Python, Triton, NVIDIA Warp, Numba-CUDA, CUDA C, PyTorch]
+links:
+  repo: https://github.com/walidhemati/pymd
+  paper: https://github.com/walidhemati/pymd/blob/master/paper/paper.pdf
+metrics:
+  - label: "Best rate (CUDA C, N ≈ 1M atoms)"
+    after: "508"
+    unit: "Matom-steps/s"
+    source: "pymd paper, generated from results/rtx3070-laptop.json"
+    verified: true
+  - label: "vs HOOMD-blue, single precision (N = 4M)"
+    after: "1.29"
+    unit: "× faster"
+    source: "pymd paper, results/counterparts.json (HOOMD autotuned)"
+    verified: true
+  - label: "Triton kernel vs HOOMD-blue"
+    after: "1.17"
+    unit: "× faster"
+    source: "pymd paper, results/counterparts.json"
+    verified: true
+  - label: "vs LAMMPS KOKKOS, single precision"
+    after: "4.56"
+    unit: "× faster"
+    source: "pymd paper, results/counterparts.json"
+    verified: true
+  - label: "Force difference vs yamd (C++)"
+    after: "1e-14"
+    source: "pymd paper, results/yamd-compare.json"
+    verified: true
+description: "Lennard-Jones and EAM molecular dynamics on the GPU from Python: 1.3× HOOMD-blue and 4.6× LAMMPS on the same GPU, with forces matching my C++ code yamd to 1e-14."
+---
+import { Image } from 'astro:assets';
+import TLDR from '../../components/content/TLDR.astro';
+import Results from '../../components/content/Results.astro';
+import fig from '../../assets/work/pymd/counterparts.png';
+
+<TLDR
+  problem="Molecular dynamics mixes neighbour-list bookkeeping with arithmetic, which is where GPU codes usually lose time."
+  approach="Cell lists with counting sort, Verlet lists with skin, fused force kernels in seven backends; the LAMMPS in.lj problem as the benchmark."
+  result="The fused CUDA C and Triton kernels outrun HOOMD-blue and LAMMPS built for the same GPU, and every code agrees on energies and pressure."
+/>
+
+## Problem
+
+pymd is the Python successor of [yamd](/work/yamd/), my C++ molecular dynamics coursework. It reproduces the LAMMPS `in.lj` log and NIST reference energies, and asks how close Python gets to the established GPU MD codes.
+
+## Approach
+
+- Lennard-Jones and Gupta EAM (gold), velocity Verlet, Berendsen and Langevin thermostats.
+- Neighbour lists rebuilt on the GPU; fused list-walk and force kernels.
+- Validation: LAMMPS `in.lj` step 0 exact, NIST SRSW energies within 0.06 %, Johnson–Zollweg–Gubbins equation of state.
+- LAMMPS (GPU and KOKKOS packages) and HOOMD-blue built for this GPU and checked against the same initial state.
+
+<figure class="figure">
+  <Image src={fig} alt="Bar chart of throughput against system size: pymd CUDA C and Triton above HOOMD-blue single precision, LAMMPS KOKKOS and GPU packages far below." widths={[720, 1200]} sizes="(max-width: 760px) 100vw, 760px" />
+  <figcaption>Same-GPU head-to-head with LAMMPS and HOOMD-blue.</figcaption>
+</figure>
+
+## Results
+
+<Results metrics={frontmatter.metrics}>
+  On the same GPU the best pymd kernels are faster than HOOMD-blue (fully autotuned) and several times faster than LAMMPS. LAMMPS KOKKOS spends most of its GPU time in a neighbour build that stays in double precision. See the [paper](https://github.com/walidhemati/pymd/blob/master/paper/paper.pdf).
+</Results>
+
+## What I'd do next
+
+- Long-range electrostatics (PME).
+- Multi-GPU runs.
+
+Part of the [Python-HPC suite](/work/python-hpc/).

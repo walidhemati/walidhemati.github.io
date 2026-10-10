@@ -22,10 +22,10 @@ import { EMAIL, SOCIALS } from '../site.config';
 
 const { all, also } = await getWork();
 
-/* pylbm numbers band (4.4 #15): ONLY verified metrics render (quoted from the
-   pylbm README; see src/content/work/pylbm.mdx). */
-const pylbm = all.find((w) => w.id === 'pylbm');
-const numbers = pylbm ? visibleMetrics(pylbm.data) : [];
+/* Numbers band (4.4 #15): ONLY verified metrics render (the Python-HPC suite's
+   headline numbers; see src/content/work/python-hpc.mdx). */
+const suite = all.find((w) => w.id === 'python-hpc');
+const numbers = suite ? visibleMetrics(suite.data) : [];
 
 /* [03] Also: second-tier entries from the collection, plus the review paper
    (audit: repo Machine-Learning-Based-Android-Malware-Detection holds the PDF). */
@@ -62,7 +62,7 @@ const isoDay = (d: Date) => d.toISOString().slice(0, 10);
 
     {
       numbers.length > 0 && (
-        <section class="numbers" aria-label="pylbm in numbers">
+        <section class="numbers" aria-label="The Python-HPC suite in numbers">
           <div class="wrap">
             <dl class="cells numbers__cells" data-reveal-stagger style={`--cells:${numbers.length}`}>
               {numbers.map((m) => (
@@ -75,7 +75,7 @@ const isoDay = (d: Date) => d.toISOString().slice(0, 10);
                 </div>
               ))}
             </dl>
-            <p class="numbers__note t-mono c-ink-3">pylbm · validated against Ghia et al. (1982)</p>
+            <p class="numbers__note t-mono c-ink-3">Python-HPC suite · measured on one RTX 3070 Laptop GPU · <a href="/work/python-hpc/">details</a></p>
           </div>
         </section>
       )

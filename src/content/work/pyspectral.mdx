@@ -1,0 +1,77 @@
+---
+title: pyspectral
+line: "Pseudo-spectral Navier–Stokes DNS on the GPU from Python at the FFT roofline, 1.9–2.5× faster than JAX-CFD on the same GPU."
+discipline: Scientific computing · GPU
+domain: [scientific]
+yearConfirmed: true
+year: 2026
+status: open-source
+stack: [Python, CuPy, cuFFT, Triton, NVIDIA Warp, CUDA C, PyTorch]
+links:
+  repo: https://github.com/walidhemati/pyspectral
+  paper: https://github.com/walidhemati/pyspectral/blob/master/paper/paper.pdf
+metrics:
+  - label: "2D 8192², % of FFT roofline"
+    after: "99"
+    unit: "%"
+    source: "pyspectral paper, generated from results/rtx3070-laptop.json"
+    verified: true
+  - label: "3D 384³, % of FFT roofline"
+    after: "103"
+    unit: "%"
+    source: "pyspectral paper, generated from results/rtx3070-laptop.json"
+    verified: true
+  - label: "vs JAX-CFD, 2D 8192²"
+    after: "1.9–2.5"
+    unit: "× faster"
+    source: "pyspectral paper, results/counterparts.json"
+    verified: true
+  - label: "Taylor–Green Re 1600, peak dissipation vs 512³ reference"
+    after: "+0.43"
+    unit: "%"
+    source: "pyspectral paper, results/validation.json"
+    verified: true
+  - label: "RK4 convergence order"
+    after: "4.07"
+    source: "pyspectral paper, results/validation.json"
+    verified: true
+description: "Pseudo-spectral Navier–Stokes DNS on the GPU from Python at the FFT roofline, 1.9–2.5× faster than JAX-CFD on the same GPU."
+---
+import { Image } from 'astro:assets';
+import TLDR from '../../components/content/TLDR.astro';
+import Results from '../../components/content/Results.astro';
+import fig from '../../assets/work/pyspectral/fig_roofline.png';
+
+<TLDR
+  problem="Spectral DNS spends nearly all its time in FFTs, so the FFT library sets a hard floor."
+  approach="Basdevant's reformulation for fewer FFTs, one fused kernel on each side of the transforms, and in-place batched cuFFT plans."
+  result="A step runs at the speed of its unavoidable FFTs: 99 % (2D) and 103 % (3D) of the FFT roofline."
+/>
+
+## Problem
+
+The FFT roofline (the FFTs of a step as standalone cuFFT calls, plus the minimal pointwise traffic) says how fast a step can possibly be. The code is checked against exact solutions and the Re = 1600 Taylor–Green reference.
+
+## Approach
+
+- 2D vorticity and 3D rotational-form Navier–Stokes, 2/3 dealiasing, integrating-factor RK4.
+- Eleven backend variants from NumPy to hand-written CUDA C.
+- Head-to-heads with JAX-CFD (GPU), spectralDNS (CPU, MPI) and the GPU branch of Dedalus, each verified against pyspectral first.
+
+<figure class="figure">
+  <Image src={fig} alt="Bar chart: fraction of the FFT roofline reached by each variant at the largest grid; fused in-place CUDA C at the roofline, Triton and Warp around 75 to 80 percent." widths={[720, 1200]} sizes="(max-width: 760px) 100vw, 760px" />
+  <figcaption>Each variant as a fraction of the FFT roofline at the largest grid.</figcaption>
+</figure>
+
+## Results
+
+<Results metrics={frontmatter.metrics}>
+  The fused in-place CUDA C path reaches the FFT roofline; Triton and Warp reach 76–80 %, limited by the out-of-place FFT calls they go through. JAX-CFD solves the same 2D problem 1.9–2.5× slower on the same GPU. See the [paper](https://github.com/walidhemati/pyspectral/blob/master/paper/paper.pdf).
+</Results>
+
+## What I'd do next
+
+- FFT callbacks to fold the pointwise kernels into the transforms.
+- Multi-GPU pencil decomposition.
+
+Part of the [Python-HPC suite](/work/python-hpc/).

@@ -1,0 +1,78 @@
+---
+title: pyising
+line: "Ising Monte Carlo on the GPU from Python: 419 billion spin flips per second, 1.5× NVIDIA's optimised reference code on the same GPU."
+discipline: Scientific computing · GPU
+domain: [scientific]
+yearConfirmed: true
+year: 2026
+status: open-source
+stack: [Python, Triton, NVIDIA Warp, Numba-CUDA, CUDA C, PyTorch]
+links:
+  repo: https://github.com/walidhemati/pyising
+  paper: https://github.com/walidhemati/pyising/blob/master/paper/paper.pdf
+metrics:
+  - label: "Best rate (CUDA C, 1-bit multi-spin)"
+    after: "419.3"
+    unit: "flips/ns"
+    source: "pyising paper, generated from results/rtx3070-laptop.json: 43.6 % of copy bandwidth"
+    verified: true
+  - label: "Best pure-Python kernel (Warp)"
+    after: "371.9"
+    unit: "flips/ns"
+    source: "pyising paper, generated from results/rtx3070-laptop.json"
+    verified: true
+  - label: "vs NVIDIA ising-gpu cuIsingModel"
+    after: "1.52"
+    unit: "× faster"
+    source: "pyising paper, results/counterparts.json"
+    verified: true
+  - label: "Critical temperature, 2D / 3D"
+    after: "0.09 / 0.03"
+    unit: "% error"
+    source: "pyising paper, results/validation.json"
+    verified: true
+  - label: "Bit-identical backends"
+    after: "33 / 33"
+    source: "pyising paper, results/validation.json"
+    verified: true
+description: "Ising Monte Carlo on the GPU from Python: 419 billion spin flips per second, 1.5× NVIDIA's optimised reference code on the same GPU."
+---
+import { Image } from 'astro:assets';
+import TLDR from '../../components/content/TLDR.astro';
+import Results from '../../components/content/Results.astro';
+import fig from '../../assets/work/pyising/counterparts.png';
+
+<TLDR
+  problem="GPU Ising codes are fast, but their numbers come from different hardware and different random-number budgets."
+  approach="One counter-based Philox stream shared by seven backends, 1-bit multi-spin coding, and a lazy bitwise comparison that draws about 12.6 instead of 32 random bits per spin."
+  result="419 flips/ns on a laptop GPU, bit-identical across backends, and faster than NVIDIA's own optimised code run on the same GPU."
+/>
+
+## Problem
+
+Ising Monte Carlo is bound by memory traffic and random-number generation. Because every backend uses the same counter-based random stream, the same seed gives the same lattice on NumPy, PyTorch, Triton, Warp, Numba and CUDA C, which makes correctness checks exact.
+
+## Approach
+
+- int8 checkerboard and 1-bit multi-spin coding; Metropolis and heat bath; 2D and 3D; Wolff cluster updates for validation.
+- Lazy bitwise uniforms: lanes stop drawing random bits as soon as their decision is fixed, with the exact Metropolis probability.
+- Validation against the exact finite-lattice energy, Onsager–Yang magnetisation and Binder crossings in 2D and 3D.
+- Head-to-head with NVIDIA ising-gpu (Romero et al. 2020, Bisson et al. 2025), built for this GPU.
+
+<figure class="figure">
+  <Image src={fig} alt="Bar chart: flips per nanosecond for NVIDIA ising-gpu programs in black and grey and pyising kernels in colour; the pyising packed kernels are the tallest bars." widths={[720, 1200]} sizes="(max-width: 760px) 100vw, 760px" />
+  <figcaption>Same-GPU head-to-head with NVIDIA ising-gpu.</figcaption>
+</figure>
+
+## Results
+
+<Results metrics={frontmatter.metrics}>
+  Our packed CUDA C kernel runs 1.52× and the Warp kernel 1.34× faster than NVIDIA's current cuIsingModel on this GPU; energies agree within statistical error. See the [paper](https://github.com/walidhemati/pyising/blob/master/paper/paper.pdf).
+</Results>
+
+## What I'd do next
+
+- Profile the gap to the memory bound on the packed kernels.
+- Multi-GPU halo exchange for very large lattices.
+
+Part of the [Python-HPC suite](/work/python-hpc/).

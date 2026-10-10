@@ -1,0 +1,106 @@
+---
+n: 2
+title: Python-HPC suite
+line: Six GPU simulation codes written in Python, each measured against its hardware roofline, against hand-written CUDA C and against established HPC codes on the same GPU.
+discipline: Scientific computing · GPU performance
+domain: [scientific, research]
+yearConfirmed: true
+year: 2026
+status: open-source
+stack: [Python, Triton, NVIDIA Warp, Numba-CUDA, CUDA C, CuPy, PyTorch]
+links:
+  repo: https://github.com/walidhemati/pyhpc-overview
+  paper: https://github.com/walidhemati/pyhpc-overview/blob/master/paper/paper.pdf
+metrics:
+  - label: Workloads measured
+    after: "9"
+    source: "pyhpc-overview paper, Table 1 (six packages: LBM D2Q9/D3Q19, heat 2D/3D, N-body, MD, spectral 2D/3D, Ising)"
+    verified: true
+  - label: "Python DSL vs CUDA C efficiency (median)"
+    after: "97"
+    unit: "%"
+    source: "pyhpc-overview paper, generated from results/summary.json (range 77–103 %)"
+    verified: true
+  - label: Established codes run on the same GPU
+    after: "11"
+    source: "FluidX3D, Lettuce, pystencils, AN5D, CUDA Samples nbody, LAMMPS, HOOMD-blue, JAX-CFD, spectralDNS, Dedalus, NVIDIA ising-gpu"
+    verified: true
+  - label: Papers (one per package + overview)
+    after: "7"
+    source: "paper/paper.pdf in each repository"
+    verified: true
+featured: true
+description: Six open-source GPU simulation codes in Python, each measured as a fraction of its roofline on one RTX 3070 Laptop GPU and compared with hand-written CUDA C and eleven established HPC codes.
+---
+import { Image } from 'astro:assets';
+import TLDR from '../../components/content/TLDR.astro';
+import Decision from '../../components/content/Decision.astro';
+import Results from '../../components/content/Results.astro';
+import FlowDiagram from '../../components/content/FlowDiagram.astro';
+import efficiency from '../../assets/work/python-hpc/efficiency.png';
+
+<TLDR
+  problem="“Python is too slow for HPC” is usually argued with one benchmark on someone else's hardware."
+  approach="Six simulation codes, one GPU, one protocol: every kernel reported as a fraction of a ceiling measured on that GPU, next to hand-written CUDA C and established codes."
+  result="Kernels written in Triton, Warp or Numba reach 77–103 % (median 97 %) of the efficiency of hand-written CUDA C, and match or beat the best established code on all nine workloads."
+/>
+
+## Problem
+
+<p class="lede">Is Python a GPU language, or only the thing that launches one?</p>
+
+Triton, NVIDIA Warp and Numba-CUDA let the kernel itself be written in Python, and `torch.compile` turns array code into fused GPU kernels. Whether that is fast enough for scientific computing is usually argued with a single number. A fair answer needs the same algorithm in every language, a ceiling that says what the hardware allows, and real HPC codes on the same machine.
+
+## Approach
+
+Six packages, each a complete, validated simulation code with its own paper:
+
+- **[pylbm](/work/pylbm/)**: lattice Boltzmann flow (D2Q9, D3Q19).
+- **[pyheat3d](/work/pyheat3d/)**: heat equation and Jacobi stencils, with temporal blocking.
+- **[pygravity](/work/pygravity/)**: direct-summation N-body gravity.
+- **[pymd](/work/pymd/)**: Lennard-Jones and EAM molecular dynamics.
+- **[pyspectral](/work/pyspectral/)**: pseudo-spectral Navier–Stokes turbulence.
+- **[pyising](/work/pyising/)**: Ising Monte Carlo with 1-bit multi-spin coding.
+
+Every package implements the same optimisation ladder and checks every rung against a NumPy oracle:
+
+<FlowDiagram
+  fig="FIG. 02"
+  caption="The ladder every package climbs. Each rung is benchmarked as a percentage of the workload's roofline on the same GPU."
+  steps={[
+    { label: 'NumPy', sub: 'oracle\nCPU' },
+    { label: 'PyTorch', sub: 'eager and\ntorch.compile' },
+    { label: 'Python DSL', sub: 'Triton · Warp\nNumba-CUDA' },
+    { label: 'CUDA C', sub: 'NVRTC, launched\nfrom Python' },
+  ]}
+/>
+
+<figure class="figure">
+  <Image src={efficiency} alt="Grouped bar chart: for each of nine workloads, the percentage of the roofline reached by torch.compile, the best Python GPU-language kernel, hand-written CUDA C and the best established code. Python-language kernels sit close to CUDA C everywhere; lattice Boltzmann and the 2D stencil are at 100 percent." widths={[720, 1200]} sizes="(max-width: 760px) 100vw, 760px" />
+  <figcaption>Best implementation of each class as a percentage of the workload's roofline, on one RTX 3070 Laptop GPU. Black: the best established code. From the overview paper.</figcaption>
+</figure>
+
+## Decisions
+
+<div class="decisions">
+  <Decision chose="Percent of a measured roofline" over="raw speed-ups">
+    A speed-up says nothing about how much is left. Every number is reported against a ceiling measured on the same GPU: copy bandwidth, FMA throughput, cuFFT time or random-number throughput.
+  </Decision>
+  <Decision chose="Running the established codes myself" over="quoting published numbers">
+    FluidX3D, LAMMPS, HOOMD-blue, AN5D, NVIDIA's ising-gpu and six more were built from pinned commits and checked to solve the same problem before timing them on the same GPU.
+  </Decision>
+  <Decision chose="Every number generated from results files" over="hand-typed tables">
+    Benchmarks write JSON; scripts turn it into the papers' numbers, figures and README tables. Final numbers come from serial runs on an idle GPU.
+  </Decision>
+</div>
+
+## Results
+
+<Results metrics={frontmatter.metrics}>
+  Python-language kernels match hand-written CUDA C on lattice Boltzmann, stencils and N-body, and stay within 9–23 % on MD, Ising and spectral. Against the established codes they tie FluidX3D, run 1.3× HOOMD-blue and 1.5× NVIDIA's optimised Ising code; the one loss is AN5D's deep 2D temporal blocking. Details and every caveat are in the [overview paper](https://github.com/walidhemati/pyhpc-overview/blob/master/paper/paper.pdf).
+</Results>
+
+## What I'd do next
+
+- Repeat the suite on a data-centre GPU (A100/H100) to see whether the percentages transfer.
+- Close the spectral gap: in-place batched FFT plans from a Python language.

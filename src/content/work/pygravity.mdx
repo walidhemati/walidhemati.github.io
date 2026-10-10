@@ -1,0 +1,78 @@
+---
+title: pygravity
+line: "Direct-summation N-body gravity on the GPU from Python: 440 billion interactions per second, faster than the CUDA Samples nbody on the same GPU."
+discipline: Scientific computing · GPU
+domain: [scientific]
+yearConfirmed: true
+year: 2026
+status: open-source
+stack: [Python, Triton, NVIDIA Warp, Numba-CUDA, CUDA C, PyTorch]
+links:
+  repo: https://github.com/walidhemati/pygravity
+  paper: https://github.com/walidhemati/pygravity/blob/master/paper/paper.pdf
+metrics:
+  - label: "Best kernel (CUDA C, packed FP16)"
+    after: "440"
+    unit: "Ginter/s"
+    source: "pygravity paper, generated from results/rtx3070-laptop.json: 8.81 TFLOPS, 56.8 % of the measured FMA peak"
+    verified: true
+  - label: "Best FP32 CUDA C, % of FMA peak"
+    after: "53.6"
+    unit: "%"
+    source: "pygravity paper, generated from results/rtx3070-laptop.json"
+    verified: true
+  - label: "Best pure-Python kernel (Warp), % of FMA peak"
+    after: "52.2"
+    unit: "%"
+    source: "pygravity paper, generated from results/rtx3070-laptop.json"
+    verified: true
+  - label: "vs CUDA Samples nbody (fast-math / as shipped)"
+    after: "1.07 / 1.23"
+    unit: "× faster"
+    source: "pygravity paper, results/counterparts.json"
+    verified: true
+  - label: "Energy error, Plummer sphere"
+    after: "1.2e-6"
+    source: "pygravity paper, results/validation.json"
+    verified: true
+description: "Direct-summation N-body gravity on the GPU from Python: 440 billion interactions per second, faster than the CUDA Samples nbody on the same GPU."
+---
+import { Image } from 'astro:assets';
+import TLDR from '../../components/content/TLDR.astro';
+import Results from '../../components/content/Results.astro';
+import fig from '../../assets/work/pygravity/fig_ladder.png';
+
+<TLDR
+  problem="All-pairs N-body is the textbook compute-bound GPU kernel."
+  approach="The same softened force in seven backends, measured against an FMA-chain microbenchmark, and explained instruction by instruction from the compiled SASS."
+  result="Python kernels reach 52 % of the FMA peak, within a few percent of CUDA C, and the issue bound explains why nobody gets much further."
+/>
+
+## Problem
+
+Compute-bound kernels hide nothing behind memory: the instruction count decides. That makes N-body a sharp test of what Python GPU compilers emit.
+
+## Approach
+
+- Tiling, unrolling and register blocking in Triton, Warp, Numba and CUDA C; a packed FP16x2 variant.
+- SASS counts per interaction explain the gap to the peak (issue bound ≈ 75 %).
+- Validation: leapfrog order 2, Hermite order 4, Kepler period to 9.4e-6, Plummer energy to 1.2e-6.
+- Head-to-head with the CUDA Samples nbody (GPU Gems 3), built unchanged.
+
+<figure class="figure">
+  <Image src={fig} alt="Bar chart of the optimisation ladder in GFLOPS with the measured FMA peak as a dashed line; tiled Triton, Warp, Numba and CUDA C kernels around half the peak." widths={[720, 1200]} sizes="(max-width: 760px) 100vw, 760px" />
+  <figcaption>The ladder against the measured FP32 FMA peak.</figcaption>
+</figure>
+
+## Results
+
+<Results metrics={frontmatter.metrics}>
+  The Python kernels run within a few percent of hand-written CUDA C, and the CUDA C kernel of the same structure beats NVIDIA's sample by needing fewer issue slots per interaction. See the [paper](https://github.com/walidhemati/pygravity/blob/master/paper/paper.pdf).
+</Results>
+
+## What I'd do next
+
+- A Barnes–Hut or FMM rung for large N.
+- Hermite on the GPU.
+
+Part of the [Python-HPC suite](/work/python-hpc/).

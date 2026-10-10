@@ -1,0 +1,78 @@
+---
+title: pyheat3d
+line: "Heat-equation and Jacobi stencils (2D/3D) on the GPU from Python: single-step kernels at the copy bandwidth, temporal blocking up to 3.5× past the single-step roofline."
+discipline: Scientific computing · GPU
+domain: [scientific]
+yearConfirmed: true
+year: 2026
+status: open-source
+stack: [Python, Triton, NVIDIA Warp, Numba-CUDA, CUDA C, PyTorch]
+links:
+  repo: https://github.com/walidhemati/pyheat3d
+  paper: https://github.com/walidhemati/pyheat3d/blob/master/paper/paper.pdf
+metrics:
+  - label: "Best single step, 3D 512³ (Numba z-march)"
+    after: "41.0"
+    unit: "GLUPS"
+    source: "pyheat3d paper, generated from results/rtx3070-laptop.json: 91 % of copy bandwidth"
+    verified: true
+  - label: "Best single step, 2D 16384² (torch.compile)"
+    after: "45.5"
+    unit: "GLUPS"
+    source: "pyheat3d paper, generated from results/rtx3070-laptop.json: 101 % of copy bandwidth"
+    verified: true
+  - label: "Temporal blocking vs single-step roofline (2D / 3D)"
+    after: "3.50 / 2.09"
+    unit: "×"
+    source: "pyheat3d paper, generated from results/rtx3070-laptop.json"
+    verified: true
+  - label: "vs pystencils, 3D single step"
+    after: "1.26"
+    unit: "× faster"
+    source: "pyheat3d paper, results/counterparts.json"
+    verified: true
+  - label: "vs AN5D temporal blocking (3D / 2D)"
+    after: "1.31× faster / 1.45× slower"
+    source: "pyheat3d paper, results/counterparts.json"
+    verified: true
+description: "Heat-equation and Jacobi stencils (2D/3D) on the GPU from Python: single-step kernels at the copy bandwidth, temporal blocking up to 3.5× past the single-step roofline."
+---
+import { Image } from 'astro:assets';
+import TLDR from '../../components/content/TLDR.astro';
+import Results from '../../components/content/Results.astro';
+import fig from '../../assets/work/pyheat3d/roofline.png';
+
+<TLDR
+  problem="A stencil is the textbook memory-bound kernel: about one flop per byte."
+  approach="Seven backends behind one interface, z-marching kernels in 3D, and CUDA C temporal blocking that fuses up to eight time steps per DRAM pass."
+  result="Python kernels reach the copy bandwidth; temporal blocking raises the per-update roofline instead of beating the hardware. pystencils is level in 2D and slower in 3D; AN5D wins deep 2D blocking."
+/>
+
+## Problem
+
+The explicit heat equation and the Jacobi iteration share one update. If Python reaches the hardware limit anywhere, it should be here, and the interesting question is what it takes to go past the single-step limit honestly.
+
+## Approach
+
+- Ladder: NumPy, PyTorch, `torch.compile`, Triton, Warp, Numba and CUDA C, all checked against a NumPy oracle.
+- 3D kernels march along z, keeping the planes in registers.
+- Temporal blocking (k = 2, 3, 4, 8) in CUDA C, reported with its traffic, not as a victory over DRAM.
+- Validation: spatial order 1.97–2.08, time order 1.00 against analytic modes.
+
+<figure class="figure">
+  <Image src={fig} alt="Roofline plot: single-step kernels close to the copy-bandwidth line; temporally blocked kernels above the single-step roofline." widths={[720, 1200]} sizes="(max-width: 760px) 100vw, 760px" />
+  <figcaption>Every variant against the single-step and 2-byte rooflines.</figcaption>
+</figure>
+
+## Results
+
+<Results metrics={frontmatter.metrics}>
+  The single-step kernels written in Python sit at the copy bandwidth (2D) or within 10 % of it (3D). Against established codes on the same GPU: pystencils matches in 2D and is slower in 3D; AN5D's generated temporal blocking is faster in 2D and slower in 3D. See the [paper](https://github.com/walidhemati/pyheat3d/blob/master/paper/paper.pdf).
+</Results>
+
+## What I'd do next
+
+- Temporal blocking written in a Python language rather than CUDA C.
+- Retune the tile shapes on an idle GPU.
+
+Part of the [Python-HPC suite](/work/python-hpc/).

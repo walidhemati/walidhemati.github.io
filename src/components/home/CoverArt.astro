@@ -205,7 +205,29 @@ const clusters =
   }
 
   {
-    !['shikenso', 'pylbm', 'steuerapp', 'flatsnap', 'eeg-emotion-vae'].includes(slug) && (
+    slug === 'python-hpc' && (
+      <g>
+        {/* Synthetic roofline: memory roof, compute roof, kernels below it */}
+        <path d="M60 250 h380 M60 250 v-220" class="cover__thin" />
+        <path d="M60 236 L 300 70" class="cover__frame" />
+        <path d="M300 70 H 440" class="cover__lid" />
+        <path d="M60 248 L 300 82" class="cover__dash" />
+        {[[118, 196], [150, 170], [176, 150], [214, 126], [252, 102], [330, 96], [366, 104], [404, 120]].map(([x, y], i) =>
+          i % 3 === 0 ? (
+            <circle cx={x} cy={y} r="4" class="cover__accent-dot" />
+          ) : (
+            <circle cx={x} cy={y} r="3.5" class="cover__hollow" />
+          ),
+        )}
+        <text x="60" y="22" class="cover__mono">% OF ROOFLINE · 9 WORKLOADS</text>
+        <text x="312" y="60" class="cover__mono">COMPUTE</text>
+        <text x="64" y="272" class="cover__mono">BYTES → FLOPS</text>
+      </g>
+    )
+  }
+
+  {
+    !['shikenso', 'pylbm', 'steuerapp', 'flatsnap', 'eeg-emotion-vae', 'python-hpc'].includes(slug) && (
       <g>
         <rect x="120" y="60" width="240" height="180" class="cover__frame" />
         <path d="M120 200 C 200 120, 280 220, 360 120" class="cover__accent-thin" />
