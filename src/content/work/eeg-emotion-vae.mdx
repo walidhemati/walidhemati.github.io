@@ -1,30 +1,60 @@
 ---
 n: 5
 title: Emotion from EEG
-line: Biosignal-based latent factor decoding for emotion detection with a variational autoencoder, on the DEAP and SEED datasets.
+line: "Emotion detection from EEG through variational-autoencoder latent factors, on DEAP and SEED: F1 0.877 for arousal and 0.834 for valence on DEAP."
 discipline: Research · ML
 domain: [research, ml-cv]
-year: 2022
-yearConfirmed: false
+year: 2023
+yearConfirmed: true
+role: Co-author, B.Sc. graduation project
+team: "With Nasibullah Qarizada; supervised by Fatma Patlar Akbulut"
 status: research
-stack: [Python, MATLAB]
+stack: [Python, Keras, MATLAB]
 links:
   repo: https://github.com/walidhemati/Biosignals-Based-Latent-Factor-Decoding-for-emotion-detection-using-a-Variational-Autoencoder
+  paper: https://github.com/walidhemati/Biosignals-Based-Latent-Factor-Decoding-for-emotion-detection-using-a-Variational-Autoencoder/blob/main/Biosignals_Based_Latent_Factor_Decoding_for_emotion_detection_using_a_Variational_Autoencoder%20(1).pdf
 featured: true
-description: Research on emotion detection from EEG with a variational autoencoder that decodes latent factors from biosignals (DEAP and SEED datasets).
+description: "Graduation research on emotion detection from EEG: a variational autoencoder compresses DEAP and SEED recordings into 16 latent factors, and an LSTM or GRU reads emotion from them."
+metrics:
+  - label: "DEAP arousal, VAE + LSTM"
+    after: "0.877"
+    unit: "F1"
+    source: "Paper, Table II (mean of 32 subjects); next best encoder PCA 0.641"
+    verified: true
+  - label: "DEAP valence, VAE + LSTM"
+    after: "0.834"
+    unit: "F1"
+    source: "Paper, Table III; next best encoder PCA 0.621"
+    verified: true
+  - label: "DEAP arousal, VAE + LSTM accuracy"
+    after: "86.1"
+    unit: "%"
+    source: "Repo, PredictionDeapResults/lstm_personal_performance_vae_weighted_arousal_subcross.mat"
+    verified: true
+  - label: "SEED positive vs negative, VAE + GRU"
+    after: "0.896"
+    unit: "F1"
+    source: "Paper, Table VII (mean of 15 subjects); PCA + GRU 0.901"
+    verified: true
+  - label: "Reconstruction from 16 factors, VAE, DEAP / SEED"
+    after: "0.99 / 0.95"
+    unit: "Pearson r"
+    source: "Paper, Section IV.B"
+    verified: true
 todo:
-  - Year (the old site says 2022) and his role, confirmed by Walid.
-  - The paper PDF link; then add links.paper.
-  - Latent-space figure, the abstract and any reported results (as verified metrics).
+  - "Year (2023) and role are taken from the paper's header (IKU 2023 spring graduation project, second of three authors); confirm the role wording."
+  - "The paper link points at the PDF in the repo; replace it if the paper is ever published elsewhere."
 ---
 import TLDR from '../../components/content/TLDR.astro';
 import Decision from '../../components/content/Decision.astro';
 import Results from '../../components/content/Results.astro';
+import { Image } from 'astro:assets';
+import recon from '../../assets/work/eeg-emotion-vae/reconstruction-deap.png';
 
 <TLDR
   problem="EEG is high-dimensional, noisy and different from person to person. Emotion labels are coarse by comparison."
   approach="A variational autoencoder compresses the recordings into a small set of latent factors, which are then decoded for emotion."
-  result="A research paper with code in Python and MATLAB, using two public datasets: DEAP and SEED."
+  result="With an LSTM on top, the VAE factors scored F1 0.877 (arousal) and 0.834 (valence) on DEAP, far ahead of PCA, ICA, RBM and a plain autoencoder. On SEED, PCA did as well."
 />
 
 ## Problem
@@ -38,7 +68,8 @@ The project asks a narrower question first: can a model learn a compact descript
 ## Constraints
 
 - **Public data.** Two established datasets: DEAP, EEG recorded while participants watched music videos and rated their own reactions, and SEED, EEG recorded while participants watched film clips chosen to be positive, neutral or negative.
-- **Two toolchains.** EEG work lives in MATLAB as much as in Python, so the code uses both.
+- **Two very different recordings.** DEAP: 32 subjects, 32 channels at 128 Hz, 40 one-minute trials each, rated for valence and arousal (above 5 counts as positive). SEED: 15 subjects, 62 channels at 200 Hz, film clips labelled positive, neutral or negative; we dropped the neutral trials.
+- **Two toolchains.** EEG work lives in MATLAB as much as in Python, so the code uses both. It started from the public code of Li et al.'s latent-factor-decoding work and extends it to SEED and to GRU models.
 
 ## Approach
 
@@ -64,11 +95,16 @@ The project asks a narrower question first: can a model learn a compact descript
 
 A variational autoencoder has two halves. The encoder maps a recording to a distribution over a few latent factors; the decoder has to rebuild the signal from a sample of them. Because everything must pass through that narrow space, the factors are pushed to capture what is consistent in the signal rather than its noise. Emotion detection then works on those factors instead of on the raw channels.
 
+In practice the signals are z-scored per subject, and the encoder (two dense layers, built in Keras) maps each time sample's channel vector to up to 16 latent factors. A recurrent network, an LSTM or a GRU with 200 units, then reads a trial as a sequence of factor vectors, one every three seconds, and outputs positive or negative. The same pipeline runs with four other encoders for comparison: PCA, ICA, a restricted Boltzmann machine (as a deep belief network) and a plain autoencoder.
+
 ## Decisions
 
 <div class="decisions">
   <Decision chose="A variational autoencoder" over="a classifier on raw signal">
     Learning a compact representation first separates two problems: describing the signal, and reading emotion from that description.
+  </Decision>
+  <Decision chose="Four other encoders as baselines" over="reporting the VAE alone">
+    PCA, ICA, an RBM and a plain autoencoder went through the same pipeline, so every number for the VAE has a like-for-like comparison next to it.
   </Decision>
   <Decision chose="DEAP and SEED" over="a single dataset">
     Two datasets with different stimuli, music videos and film clips, and different labels give the method two independent tests.
@@ -77,11 +113,21 @@ A variational autoencoder has two halves. The encoder maps a recording to a dist
 
 ## Results
 
+**Reconstruction.** With 16 latent factors the VAE rebuilds the signal at a mean Pearson correlation of 0.99 on DEAP and 0.95 on SEED. The RBM, the autoencoder and PCA get just as close, and ICA stays far below the others. Most of the gain comes from the first few factors.
+
+<figure class="figure">
+  <Image src={recon} alt="Line chart: mean correlation between original and reconstructed DEAP signals against the number of latent factors, 1 to 16. RBM, AE, VAE and PCA rise above 0.95 by four factors and approach 1.0; ICA climbs slowly from under 0.1 to about 0.84." widths={[720, 1200]} sizes="(max-width: 760px) 100vw, 760px" />
+  <figcaption>DEAP: how well each encoder rebuilds the signal as the latent space grows (paper, Fig. 8).</figcaption>
+</figure>
+
+**Emotion.** Rebuilding the signal well is not the same as keeping the emotion in it. That is why every encoder's factors also went through the recurrent classifiers, scored by F1 on a 30 % held-out split.
+
 <Results metrics={frontmatter.metrics}>
-  The work is written up as a paper, with the code alongside it. Its reported numbers will appear here once they are quoted from the paper.
+  On DEAP the VAE factors with an LSTM were the clear winner: F1 0.877 for arousal and 0.834 for valence, where every other encoder stayed between 0.50 and 0.64. The picture is not uniform, though. With a GRU instead of an LSTM, the VAE's lead on DEAP disappears (arousal 0.603, the lowest of the five). On SEED, PCA matches or slightly beats it (0.898 vs 0.885 with an LSTM, 0.901 vs 0.896 with a GRU). The full per-subject tables are in the [paper](https://github.com/walidhemati/Biosignals-Based-Latent-Factor-Decoding-for-emotion-detection-using-a-Variational-Autoencoder/blob/main/Biosignals_Based_Latent_Factor_Decoding_for_emotion_detection_using_a_Variational_Autoencoder%20(1).pdf).
 </Results>
 
 ## What I'd do next
 
-- Add a figure of the learned latent space and the paper's abstract to this page.
-- Give the repository a README, so the code can be run without the paper open next to it.
+- Evaluate subject-independently. The 70/30 split pools trials from all subjects, so a subject's data can sit on both sides of it; leave-one-subject-out is the stricter test.
+- Find out why the VAE's lead on DEAP holds with an LSTM but not with a GRU.
+- Give the repository a top-level README and relative paths, so the code runs without the paper open next to it.

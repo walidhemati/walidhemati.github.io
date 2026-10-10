@@ -1,37 +1,50 @@
 ---
 title: yamd
-line: Coursework for the university course Molecular Dynamics in C++, built on the course's Meson template with Eigen and GoogleTest.
+line: "Molecular dynamics in C++ for a University of Freiburg course: Lennard-Jones liquids, melting gold nanoclusters and stretching a gold nanowire with MPI."
 discipline: Scientific computing · C++
 domain: [scientific]
-yearConfirmed: false
+year: 2024
+yearConfirmed: true
 status: coursework
-stack: [C++, Eigen, gtest, Meson]
+stack: [C++, Eigen, gtest, Meson, MPI]
 links:
   repo: https://github.com/walidhemati/yamd
 description: yamd is coursework for the university course Molecular Dynamics in C++, built on the course's Meson template with Eigen and GoogleTest.
 todo:
-  - One sentence on what it simulates, plus one plot if available.
-  - Year, confirmed by Walid (the README says the summer 2024 course; keep hidden until he confirms).
+  - "Year 2024 is from the README (summer 2024 course) and the commit history (04–09/2024)."
 ---
 import TLDR from '../../components/content/TLDR.astro';
+import { Image } from 'astro:assets';
+import melt from '../../assets/work/yamd/melting-point.png';
 
 <TLDR
   problem="Molecular dynamics is numerically simple to state and easy to get subtly wrong."
   approach="Coursework built on the course's Meson template, with Eigen for the maths and GoogleTest for unit tests."
-  result="A unit-tested molecular dynamics code, written for a university course."
+  result="A unit-tested MD code that melts gold clusters of 923 to 3,871 atoms and finds their melting point rising from 807 K to 869 K with size."
 />
 
 ## Overview
 
 Molecular dynamics moves atoms forward in time by computing the forces between them and integrating Newton's equations of motion, step after step. The equations fit on a napkin. The bugs hide in the details: a sign in a force, an off-by-one in a neighbour loop, a time step that quietly drifts the energy.
 
-yamd is my coursework for the university course Molecular Dynamics in C++. It started from the course's Meson template, which brought the build setup, Eigen and GoogleTest.
+yamd is my coursework for the summer 2024 course Molecular Dynamics in C++ at the University of Freiburg. It started from the course's Meson template, which brought the build setup, Eigen and GoogleTest.
+
+It simulates atoms in two settings. The first is a Lennard-Jones system, integrated with velocity Verlet, held at temperature by a Berendsen thermostat and sped up with cell-based neighbour lists. The second is gold, described by the Gupta (Ducastelle) embedded-atom potential: Mackay icosahedral clusters are heated until they melt, and a gold nanowire is pulled apart at a fixed strain rate, split across processes with MPI domain decomposition.
 
 ## How it is built
 
 - **Eigen** for vectors and arrays, so the physics reads as linear algebra rather than index arithmetic.
 - **GoogleTest** for unit tests, so each piece of the integrator can be checked on its own.
 - **Meson** as the build system, from the course template.
+
+## Result
+
+<figure class="figure">
+  <Image src={melt} alt="Line chart: melting point of gold Mackay icosahedra against cluster size. It rises from about 807 K at 923 atoms to about 869 K at 3,871 atoms." widths={[720, 1200]} sizes="(max-width: 760px) 100vw, 760px" />
+  <figcaption>Melting point of gold clusters against size, from the plateau in temperature against energy while each cluster is heated.</figcaption>
+</figure>
+
+Heating each cluster in small steps gives a temperature curve with a flat stretch where the cluster melts. Fitting that stretch gives the melting point and the latent heat. The melting point rises with size, from 807 K at 923 atoms to 869 K at 3,871 atoms, still well below bulk gold's 1,337 K, as expected for small clusters where many atoms sit on the surface.
 
 The source is on [GitHub](https://github.com/walidhemati/yamd).
 

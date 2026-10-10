@@ -1,16 +1,42 @@
 ---
 title: Turkish review classification
-line: Classifying Turkish Hepsiburada reviews, comparing logistic regression and SVM with BERTurk and DistilBERT.
+line: "Positive or negative on 885,000 Turkish Hepsiburada reviews: TF-IDF logistic regression (96.9 % accuracy) edged out recurrent models on BERTurk and DistilBERT embeddings."
 discipline: NLP
 domain: [nlp, ml-cv]
 yearConfirmed: false
 status: open-source
-stack: [Python, Jupyter, BERT]
+stack: [Python, Jupyter, scikit-learn, Keras, BERT]
+metrics:
+  - label: "Majority class (always positive)"
+    after: "93.2"
+    unit: "% accuracy"
+    source: "Class counts in the notebooks: 825,311 positive of 885,480"
+    verified: true
+  - label: "TF-IDF + logistic regression"
+    after: "96.86"
+    unit: "% accuracy"
+    source: "HepsiburadaLogistic.ipynb, 30 % test split (F1 of the positive class 98.33 %)"
+    verified: true
+  - label: "BERTurk embeddings + BiLSTM"
+    after: "96.39"
+    unit: "% accuracy"
+    source: "NLP bert base turkish classification reviews.ipynb, 20 % test split (weighted F1 96.05 %)"
+    verified: true
+  - label: "DistilBERT-Turkish embeddings + BiGRU"
+    after: "96.19"
+    unit: "% accuracy"
+    source: "NLP distilbert base turkish classification reviews.ipynb, 30 % test split (weighted F1 95.85 %; negative class F1 0.66)"
+    verified: true
+  - label: "SVM"
+    after: "96.84"
+    unit: "% accuracy"
+    source: "HepsiburadaSVM.ipynb prints this, but the cell that builds the model is missing from the saved notebook"
+    verified: false
 links:
   repo: https://github.com/walidhemati/Hepsiburada-review-classification-NLP
-description: Turkish review classification on Hepsiburada reviews, comparing logistic regression and SVM with BERTurk and DistilBERT.
+description: "Turkish review sentiment on 885,000 Hepsiburada reviews: TF-IDF logistic regression against recurrent models on BERTurk and DistilBERT embeddings."
 todo:
-  - Accuracy or F1 per model from the notebooks, then add them as verified metrics (the Results block renders them).
+  - "The SVM notebook prints 96.84 % but the cell that defines the model is missing; re-run it with sklearn's LinearSVC and then set verified: true."
   - Year, confirmed by Walid.
   - Add a README to the repo.
 ---
@@ -20,8 +46,8 @@ import FlowDiagram from '../../components/content/FlowDiagram.astro';
 
 <TLDR
   problem="Most NLP tooling is built for English. Turkish is agglutinative: one word can carry what English spreads across a sentence."
-  approach="Classify product reviews from Hepsiburada, a Turkish online marketplace, with classical baselines and with Turkish transformer models."
-  result="A like-for-like comparison of logistic regression and SVM against BERTurk and DistilBERT, in Jupyter notebooks."
+  approach="Label 885,000 reviews from Hepsiburada, a Turkish online marketplace, as positive or negative and compare TF-IDF logistic regression with recurrent models built on BERTurk and DistilBERT embeddings."
+  result="Logistic regression reached 96.9 % accuracy, the transformer-embedding models 96.2–96.4 %. Always guessing positive would already score 93.2 %."
 />
 
 ## The question
@@ -41,11 +67,17 @@ When does a pretrained transformer earn its cost? On English text the answer is 
   ]}
 />
 
-- **Classical baselines:** logistic regression and a support vector machine.
-- **Transformers:** BERT-base-turkish (BERTurk) and DistilBERT, on the same classification task.
+- **Data:** 947,030 reviews with 1–5 star ratings. Three-star reviews were dropped as neutral; 1–2 stars became negative and 4–5 positive, leaving 885,480 reviews, 93 % of them positive.
+- **Classical baselines:** TF-IDF on words and word pairs (10,000 features) with logistic regression, and a support vector machine.
+- **Transformers:** the token embeddings of BERT-base-turkish (BERTurk) and DistilBERT-base-turkish, kept frozen, feed a bidirectional LSTM or GRU over the first 23 tokens of each review. The transformers themselves are not fine-tuned.
 
 ## Results
 
 <Results metrics={frontmatter.metrics}>
-  The notebooks are on [GitHub](https://github.com/walidhemati/Hepsiburada-review-classification-NLP). The scores per model will be listed here once they are taken from the notebooks.
+  On this task the cheap model won. TF-IDF with logistic regression beat both transformer-embedding models by about half a point of accuracy, while each recurrent model needed five training epochs of 4–9 minutes. Accuracy flatters everyone here because 93 % of reviews are positive. The real difference shows in the minority class: the DistilBERT model found only 56 % of the negative reviews. The test splits also differ (20 % for BERTurk, 30 % for the others), so treat gaps under a point as noise. The notebooks are on [GitHub](https://github.com/walidhemati/Hepsiburada-review-classification-NLP).
 </Results>
+
+## What I'd do next
+
+- Fine-tune BERTurk end to end instead of only reusing its embeddings. That is the comparison the question really asks for.
+- Report macro F1 and negative-class recall on one shared split, so the imbalance cannot hide behind accuracy.
